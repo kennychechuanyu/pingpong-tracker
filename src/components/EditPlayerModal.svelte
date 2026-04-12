@@ -1,6 +1,6 @@
 <script>
   import { onMount, onDestroy } from 'svelte'
-  import { updatePlayer, deletePlayer, setPlayerPin, adminPlayers } from '../lib/stores.js'
+  import { updatePlayer, deletePlayer, setPlayerPin, setPlayerTeam, adminPlayers, teams } from '../lib/stores.js'
   import { hashPin } from '../lib/pin.js'
   import { push } from 'svelte-spa-router'
   import PinPrompt from './PinPrompt.svelte'
@@ -14,6 +14,7 @@
   let philosophy = ''
   let sifuId = null
   let rivalId = null
+  let teamId = null
   let avatarFile = null
   let avatarPreview = null
   let submitting = false
@@ -37,6 +38,7 @@
     philosophy = player.philosophy ?? ''
     sifuId = player.sifu_id ?? null
     rivalId = player.rival_id ?? null
+    teamId = player.team_id ?? null
     avatarFile = null
     avatarPreview = null
     submitting = false
@@ -72,6 +74,7 @@
     error = ''
     try {
       await updatePlayer(player.id, { name, paddle_type: paddleType, philosophy, avatarFile, sifu_id: sifuId, rival_id: rivalId })
+      await setPlayerTeam(player.id, teamId)
       open = false
     } catch (e) {
       error = e.message || 'Failed to save.'
@@ -272,6 +275,29 @@
             <p class="no-players">No other players yet.</p>
           {/if}
         </div>
+
+        <!-- Team -->
+        {#if $teams.length > 0}
+          <div class="field">
+            <span class="field-label">Team <span class="optional">optional</span></span>
+            <div class="team-pills">
+              <button
+                class="team-pill"
+                class:active={!teamId}
+                on:click={() => (teamId = null)}
+                type="button"
+              >None</button>
+              {#each $teams as t}
+                <button
+                  class="team-pill"
+                  class:active={teamId === t.id}
+                  on:click={() => (teamId = teamId === t.id ? null : t.id)}
+                  type="button"
+                >{t.emoji} {t.name}</button>
+              {/each}
+            </div>
+          </div>
+        {/if}
 
         <!-- PIN section -->
         <div class="pin-section">
@@ -515,6 +541,34 @@
   .sp-item.chosen .sp-name { color: #f59e0b; }
 
   .no-players { margin: 0; font-size: 12px; color: #444; font-style: italic; }
+
+  /* Team pills */
+  .team-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .team-pill {
+    padding: 7px 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.09);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    -webkit-tap-highlight-color: transparent;
+    font-family: inherit;
+  }
+
+  .team-pill.active {
+    background: rgba(245,158,11,0.18);
+    border-color: rgba(245,158,11,0.55);
+    color: var(--amber);
+    font-weight: 700;
+  }
 
   /* PIN section */
   .pin-section {

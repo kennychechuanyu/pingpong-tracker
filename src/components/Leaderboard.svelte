@@ -1,17 +1,82 @@
 <script>
   import { push } from 'svelte-spa-router'
   import RulesModal from './RulesModal.svelte'
+  import RecordsModal from './RecordsModal.svelte'
   import AddPlayerModal from './AddPlayerModal.svelte'
   import { getAchievements } from '../lib/achievements.js'
 
   export let rankings = []
   export let deltas = {}
+  export let matches = []
+  export let teams = []
+  export let players = []
 
   let rulesOpen = false
+  let recordsOpen = false
   let addPlayerOpen = false
 
   $: ranked = rankings.filter(p => p.games > 0)
   $: unranked = rankings.filter(p => p.games === 0)
+
+  // ── Weekly Awards ──────────────────────────────
+  $: weekStart = (() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() - d.getDay() + 1)
+    return d.toISOString()
+  })()
+  $: weekMatches = matches.filter(m => m.played_at >= weekStart)
+  $: weeklyAwards = (() => {
+    if (weekMatches.length === 0) return null
+    const byId = Object.fromEntries(rankings.map(p => [p.id, p]))
+    const stats = {}
+    for (const m of weekMatches) {
+      if (!stats[m.winner_id]) stats[m.winner_id] = { w: 0, l: 0, g: 0 }
+      if (!stats[m.loser_id]) stats[m.loser_id] = { w: 0, l: 0, g: 0 }
+      stats[m.winner_id].w++
+      stats[m.winner_id].g++
+      stats[m.loser_id].l++
+      stats[m.loser_id].g++
+    }
+    let potw = null, mostActive = null
+    for (const [id, s] of Object.entries(stats)) {
+      const net = s.w - s.l
+      if (!potw || net > potw.net || (net === potw.net && s.w > potw.wins)) potw = { id, net, wins: s.w }
+      if (!mostActive || s.g > mostActive.games) mostActive = { id, games: s.g }
+    }
+    const onFire = ranked.length > 0 ? ranked.reduce((best, p) =>
+      p.streak.type === 'W' && p.streak.count > (best?.streak.count ?? 0) ? p : best, null) : null
+    return {
+      potw: potw ? { player: byId[potw.id], net: potw.net, wins: potw.wins } : null,
+      mostActive: mostActive ? { player: byId[mostActive.id], games: mostActive.games } : null,
+      onFire: onFire && onFire.streak.count >= 2 ? onFire : null,
+    }
+  })()
+
+  // ── Team Standings ─────────────────────────────
+  $: teamStandings = (() => {
+    if (!teams || teams.length === 0) return []
+    const playerTeam = Object.fromEntries(players.map(p => [p.id, p.team_id]))
+    const teamMap = Object.fromEntries(teams.map(t => [t.id, { ...t, wins: 0, losses: 0, members: 0 }]))
+    for (const p of players) {
+      if (p.team_id && teamMap[p.team_id]) teamMap[p.team_id].members++
+    }
+    for (const m of matches) {
+      const wTeam = playerTeam[m.winner_id]
+      const lTeam = playerTeam[m.loser_id]
+      if (wTeam && lTeam && wTeam !== lTeam) {
+        if (teamMap[wTeam]) teamMap[wTeam].wins++
+        if (teamMap[lTeam]) teamMap[lTeam].losses++
+      }
+    }
+    return Object.values(teamMap)
+      .filter(t => t.members > 0)
+      .sort((a, b) => {
+        const netA = a.wins - a.losses, netB = b.wins - b.losses
+        if (netB !== netA) return netB - netA
+        return b.wins - a.wins
+      })
+  })()
 
   const podiumColors = [
     { accent: '#FFD700', bg: 'rgba(255,215,0,0.07)',    border: 'rgba(255,215,0,0.3)'    },
@@ -21,6 +86,7 @@
 </script>
 
 <RulesModal bind:open={rulesOpen} />
+<RecordsModal bind:open={recordsOpen} {rankings} {matches} />
 <AddPlayerModal bind:open={addPlayerOpen} />
 
 <div class="wrap">
@@ -40,6 +106,13 @@
           <line x1="22" y1="11" x2="16" y2="11"/>
         </svg>
       </button>
+      <button class="icon-btn" on:click={() => (recordsOpen = true)} aria-label="Hall of Records">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+          <path d="M6 9H4.5a2.5 2.5 0 010-5C7 4 7 7 7 7M18 9h1.5a2.5 2.5 0 000-5C17 4 17 7 17 7"/>
+          <path d="M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20 17 22"/>
+          <path d="M18 2H6v7a6 6 0 0012 0V2z"/>
+        </svg>
+      </button>
       <button class="icon-btn" on:click={() => (rulesOpen = true)} aria-label="How rankings work">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
           <circle cx="12" cy="12" r="10"/>
@@ -48,6 +121,47 @@
       </button>
     </div>
   </header>
+
+  <!-- Weekly Awards -->
+  {#if weeklyAwards}
+    <div class="awards-bar">
+      {#if weeklyAwards.potw?.player}
+        <div class="award-chip">
+          <span class="award-emoji">🌟</span>
+          <span class="award-text"><strong>{weeklyAwards.potw.player.name}</strong> · {weeklyAwards.potw.wins}W this week</span>
+        </div>
+      {/if}
+      {#if weeklyAwards.mostActive?.player && weeklyAwards.mostActive.player.id !== weeklyAwards.potw?.player?.id}
+        <div class="award-chip">
+          <span class="award-emoji">💪</span>
+          <span class="award-text"><strong>{weeklyAwards.mostActive.player.name}</strong> · {weeklyAwards.mostActive.games} games</span>
+        </div>
+      {/if}
+      {#if weeklyAwards.onFire && weeklyAwards.onFire.id !== weeklyAwards.potw?.player?.id}
+        <div class="award-chip">
+          <span class="award-emoji">🔥</span>
+          <span class="award-text"><strong>{weeklyAwards.onFire.name}</strong> · {weeklyAwards.onFire.streak.count}W streak</span>
+        </div>
+      {/if}
+    </div>
+  {/if}
+
+  <!-- Team Standings -->
+  {#if teamStandings.length > 0}
+    <div class="team-section">
+      <span class="team-label">Team Standings</span>
+      <div class="team-cards">
+        {#each teamStandings as team, i}
+          <div class="team-card" class:team-first={i === 0}>
+            <span class="team-emoji">{team.emoji}</span>
+            <span class="team-name">{team.name}</span>
+            <span class="team-record tnum">{team.wins}W–{team.losses}L</span>
+            <span class="team-members">{team.members} players</span>
+          </div>
+        {/each}
+      </div>
+    </div>
+  {/if}
 
   {#if rankings.length === 0}
     <div class="empty">
@@ -109,6 +223,9 @@
                 >{player.name}</span>
                 {#if player.paddle_type}
                   <span class="paddle-tag">{player.paddle_type}</span>
+                {/if}
+                {#if player.team_id && teams.find(t => t.id === player.team_id)}
+                  <span class="team-tag">{teams.find(t => t.id === player.team_id).emoji}</span>
                 {/if}
                 {#if isTop && !player.provisional}
                   <span class="crown">♛</span>
@@ -547,6 +664,115 @@
   }
 
   /* ── Contact ──────────────────────────────── */
+  /* Weekly Awards */
+  .awards-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 0 0 16px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .awards-bar::-webkit-scrollbar { display: none; }
+
+  .award-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.18);
+    border-radius: 20px;
+    padding: 6px 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .award-emoji { font-size: 14px; line-height: 1; }
+
+  .award-text {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .award-text strong {
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  /* Team Standings */
+  .team-section {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .team-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .team-cards {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .team-cards::-webkit-scrollbar { display: none; }
+
+  .team-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    min-width: 100px;
+    flex-shrink: 0;
+    transition: border-color 0.15s;
+  }
+
+  .team-card.team-first {
+    border-color: rgba(245,158,11,0.35);
+    background: rgba(245,158,11,0.05);
+  }
+
+  .team-emoji { font-size: 22px; line-height: 1; }
+
+  .team-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .team-first .team-name { color: var(--amber); }
+
+  .team-record {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .team-members {
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0.5;
+  }
+
+  .team-tag {
+    font-size: 12px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
   /* Unranked / yet to play */
   .unranked-section {
     margin-top: 24px;

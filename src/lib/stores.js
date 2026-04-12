@@ -26,6 +26,7 @@ export const matches = writable([])
 export const challenges = writable([])
 export const votes = writable([])
 export const reactions = writable([])
+export const teams = writable([])
 export const loading = writable(true)
 export const pendingChallenge = writable(null)
 // In-memory session: set after PIN verification, cleared on page reload
@@ -79,18 +80,20 @@ export const enrichedChallenges = derived([challenges, players], ([$challenges, 
 export async function loadAll() {
   loading.set(true)
   try {
-    const [{ data: p }, { data: m }, { data: c }, { data: v }, { data: rx }] = await Promise.all([
+    const [{ data: p }, { data: m }, { data: c }, { data: v }, { data: rx }, { data: t }] = await Promise.all([
       supabase.from('players').select('*').order('created_at'),
       supabase.from('matches').select('*').order('played_at'),
       supabase.from('challenges').select('*').order('created_at'),
       supabase.from('votes').select('*').order('created_at'),
       supabase.from('reactions').select('*').order('created_at'),
+      supabase.from('teams').select('*').order('created_at'),
     ])
     players.set(p ?? [])
     matches.set(m ?? [])
     challenges.set(c ?? [])
     votes.set(v ?? [])
     reactions.set(rx ?? [])
+    teams.set(t ?? [])
   } catch (e) {
     console.error('Failed to load data:', e)
   } finally {
@@ -120,6 +123,10 @@ export function subscribeRealtime() {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'reactions' }, async () => {
       const { data } = await supabase.from('reactions').select('*').order('created_at')
       reactions.set(data ?? [])
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, async () => {
+      const { data } = await supabase.from('teams').select('*').order('created_at')
+      teams.set(data ?? [])
     })
     .subscribe()
 
@@ -283,4 +290,28 @@ export async function deletePlayer(id) {
   players.update(ps => ps.filter(p => p.id !== id))
   matches.update(ms => ms.filter(m => m.winner_id !== id && m.loser_id !== id))
   challenges.update(cs => cs.filter(c => c.player1_id !== id && c.player2_id !== id))
+}
+
+export async function addTeam(name, emoji = '🏓') {
+  const { data, error } = await supabase
+    .from('teams')
+    .insert({ name, emoji })
+    .select()
+    .single()
+  if (error) throw new Error(error.message || JSON.stringify(error))
+  teams.update(t => [...t, data])
+  return data
+}
+
+export async function deleteTeam(id) {
+  const { error } = await supabase.from('teams').delete().eq('id', id)
+  if (error) throw new Error(error.message || JSON.stringify(error))
+  teams.update(t => t.filter(tm => tm.id !== id))
+  players.update(ps => ps.map(p => p.team_id === id ? { ...p, team_id: null } : p))
+}
+
+export async function setPlayerTeam(playerId, teamId) {
+  const { error } = await supabase.from('players').update({ team_id: teamId || null }).eq('id', playerId)
+  if (error) throw new Error(error.message || JSON.stringify(error))
+  players.update(ps => ps.map(p => p.id === playerId ? { ...p, team_id: teamId || null } : p))
 }
