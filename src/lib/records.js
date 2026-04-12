@@ -75,6 +75,7 @@ export function computeRecords(rankings, matches) {
 
   for (const m of sorted) {
     if (ratings[m.winner_id] == null || ratings[m.loser_id] == null) continue
+    if (!playerMap[m.winner_id] || !playerMap[m.loser_id]) continue
 
     const prevW = ratings[m.winner_id]
     const prevL = ratings[m.loser_id]
@@ -187,6 +188,7 @@ export function computeRecords(rankings, matches) {
   for (const [key, count] of Object.entries(pairCounts)) {
     if (!biggestRivalry || count > biggestRivalry.value) {
       const [id1, id2] = key.split('-')
+      if (!playerMap[id1] || !playerMap[id2]) continue
       const wins = pairWins[key] || {}
       biggestRivalry = {
         player1: playerMap[id1],

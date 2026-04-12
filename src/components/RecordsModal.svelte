@@ -7,7 +7,11 @@
 
   const close = () => (open = false)
 
-  $: records = open ? computeRecords(rankings, matches) : null
+  $: records = (() => {
+    if (!open) return null
+    try { return computeRecords(rankings, matches) }
+    catch { return null }
+  })()
 </script>
 
 {#if open}
