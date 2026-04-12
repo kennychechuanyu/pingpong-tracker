@@ -132,6 +132,7 @@ export function computeAll(players, matches) {
       wins: w,
       losses: l,
       games: w + l,
+      gamesPlayed: gamesPlayed[p.id] ?? 0,
       history: history[p.id] ?? [STARTING_ELO],
       streak: computeStreak(p.id, sorted),
       form: (formFull[p.id] ?? []).slice(-5),

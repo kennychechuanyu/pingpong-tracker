@@ -22,7 +22,8 @@
   $: weekStart = (() => {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
-    d.setDate(d.getDate() - d.getDay() + 1)
+    const day = d.getDay() || 7
+    d.setDate(d.getDate() - day + 1)
     return d.toISOString()
   })()
   $: weekMatches = matches.filter(m => m.played_at >= weekStart)
@@ -44,7 +45,9 @@
       if (!potw || net > potw.net || (net === potw.net && s.w > potw.wins)) potw = { id, net, wins: s.w }
       if (!mostActive || s.g > mostActive.games) mostActive = { id, games: s.g }
     }
-    const onFire = ranked.length > 0 ? ranked.reduce((best, p) =>
+    const weekPlayerIds = new Set(weekMatches.flatMap(m => [m.winner_id, m.loser_id]))
+    const weekActive = ranked.filter(p => weekPlayerIds.has(p.id))
+    const onFire = weekActive.length > 0 ? weekActive.reduce((best, p) =>
       p.streak.type === 'W' && p.streak.count > (best?.streak.count ?? 0) ? p : best, null) : null
     return {
       potw: potw ? { player: byId[potw.id], net: potw.net, wins: potw.wins } : null,

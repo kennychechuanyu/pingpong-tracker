@@ -79,13 +79,13 @@
   $: loserRanking  = $rankings.find(r => r.id === loser?.id)
   $: winnerElo   = winnerRanking?.elo ?? 1000
   $: loserElo    = loserRanking?.elo  ?? 1000
-  $: winnerGames = (winnerRanking?.wins ?? 0) + (winnerRanking?.losses ?? 0)
-  $: loserGames  = (loserRanking?.wins  ?? 0) + (loserRanking?.losses  ?? 0)
+  $: winnerGames = winnerRanking?.gamesPlayed ?? 0
+  $: loserGames  = loserRanking?.gamesPlayed  ?? 0
   $: seriesWins = gameScores.filter(g => g.w > g.l).length
   $: seriesLosses = gameScores.filter(g => g.l > g.w).length
   $: seriesComplete = bestOf > 1 && seriesWins === needed
-  $: ws = bestOf > 1 ? seriesWins : (parseInt(winnerScore) || 11)
-  $: ls = bestOf > 1 ? seriesLosses : (parseInt(loserScore) || 0)
+  $: ws = bestOf > 1 ? seriesWins : (Number.isFinite(parseInt(winnerScore)) ? parseInt(winnerScore) : 11)
+  $: ls = bestOf > 1 ? seriesLosses : (Number.isFinite(parseInt(loserScore)) ? parseInt(loserScore) : 0)
   $: preview = winner && loser
     ? (bestOf > 1
       ? (gameScores.length > 0 ? seriesRatings(winnerElo, loserElo, gameScores, winnerGames, loserGames) : null)
