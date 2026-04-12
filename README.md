@@ -43,3 +43,4 @@ Push to GitHub and connect to [Vercel](https://vercel.com). Add the two env vars
 - [Tailwind CSS](https://tailwindcss.com)
 - [Supabase](https://supabase.com)
 - [svelte-spa-router](https://github.com/ItalyPaleAle/svelte-spa-router)
+
