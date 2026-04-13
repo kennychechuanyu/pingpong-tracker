@@ -163,47 +163,123 @@
             <!-- Shakehand -->
             <div class="grip-card">
               <div class="grip-visual">
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                  <!-- Paddle blade -->
-                  <ellipse cx="50" cy="38" rx="25" ry="28" fill="#8B0000" stroke="#5a0000" stroke-width="1"/>
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Paddle blade (viewed from player side) -->
+                  <circle cx="100" cy="62" r="50" fill="#b91c1c" stroke="#000" stroke-width="2.5"/>
+                  <circle cx="100" cy="62" r="46" fill="#dc2626" stroke="none"/>
+                  <!-- Black edging -->
+                  <circle cx="100" cy="62" r="50" fill="none" stroke="#1a1a1a" stroke-width="3"/>
+
                   <!-- Handle -->
-                  <rect x="44" y="60" width="12" height="28" rx="2" fill="#8B4513"/>
-                  <!-- Hand (fist-style wrapped around handle) -->
-                  <ellipse cx="50" cy="78" rx="18" ry="10" fill="#f5d5a0" stroke="#d4a574" stroke-width="1"/>
-                  <!-- Thumb on blade -->
-                  <ellipse cx="35" cy="62" rx="5" ry="8" fill="#f5d5a0" stroke="#d4a574" stroke-width="0.5"/>
-                  <!-- Index finger -->
-                  <ellipse cx="65" cy="62" rx="4" ry="6" fill="#f5d5a0" stroke="#d4a574" stroke-width="0.5"/>
+                  <rect x="90" y="110" width="20" height="40" rx="2" fill="#6b3410" stroke="#000" stroke-width="1.5"/>
+                  <line x1="90" y1="120" x2="110" y2="120" stroke="#000" stroke-width="0.5" opacity="0.4"/>
+                  <line x1="90" y1="133" x2="110" y2="133" stroke="#000" stroke-width="0.5" opacity="0.4"/>
+
+                  <!-- Back of fist wrapping the handle -->
+                  <path d="M 75 135 Q 62 150, 70 172 Q 85 190, 110 188 Q 135 185, 138 165 Q 140 145, 128 135 Z"
+                        fill="#f5d5a0" stroke="#b08050" stroke-width="2"/>
+
+                  <!-- Finger knuckles (curled middle/ring/pinky) -->
+                  <ellipse cx="85" cy="150" rx="5" ry="6" fill="#e8c088" stroke="#b08050" stroke-width="1.2"/>
+                  <ellipse cx="100" cy="152" rx="5" ry="6" fill="#e8c088" stroke="#b08050" stroke-width="1.2"/>
+                  <ellipse cx="115" cy="150" rx="5" ry="6" fill="#e8c088" stroke="#b08050" stroke-width="1.2"/>
+
+                  <!-- THUMB — wrapping up onto blade face from the left -->
+                  <path d="M 85 115 Q 72 108, 64 92 Q 58 78, 68 70 Q 78 78, 84 92 Q 90 105, 88 116 Z"
+                        fill="#f59e0b" stroke="#92400e" stroke-width="2"/>
+                  <ellipse cx="67" cy="78" rx="2.5" ry="3" fill="#fcd88a" stroke="#92400e" stroke-width="0.4"/>
+
+                  <!-- INDEX — along the bottom-right edge of blade -->
+                  <path d="M 112 115 Q 128 110, 144 98 Q 154 88, 150 83 Q 140 85, 126 96 Q 116 104, 110 110 Z"
+                        fill="#22c55e" stroke="#14532d" stroke-width="2"/>
+
+                  <!-- Leader labels -->
+                  <text x="20" y="85" font-size="11" fill="#f59e0b" font-weight="800">thumb</text>
+                  <line x1="50" y1="82" x2="63" y2="78" stroke="#f59e0b" stroke-width="1.5"/>
+
+                  <text x="152" y="78" font-size="11" fill="#22c55e" font-weight="800">index</text>
+                  <line x1="151" y1="82" x2="145" y2="92" stroke="#22c55e" stroke-width="1.5"/>
                 </svg>
               </div>
               <div class="grip-label">
                 <span class="grip-cn">橫板</span>
                 <span class="grip-en">Shakehand</span>
               </div>
-              <p class="grip-desc">Grip like shaking hands with the paddle. Thumb and index finger rest near the blade. Most common grip worldwide — balanced for forehand and backhand.</p>
+              <p class="grip-desc">Grip the handle like shaking hands with it. <strong>Thumb wraps up</strong> onto one side of the blade, <strong>index finger</strong> rests along the bottom edge. Other fingers wrap the handle. Most common grip worldwide — balanced forehand and backhand.</p>
             </div>
 
             <!-- Penhold -->
             <div class="grip-card">
               <div class="grip-visual">
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                  <!-- Paddle blade -->
-                  <ellipse cx="50" cy="38" rx="25" ry="28" fill="#1a1a1a" stroke="#000" stroke-width="1"/>
-                  <!-- Handle (short, held with pen grip) -->
-                  <rect x="46" y="60" width="8" height="14" rx="1" fill="#8B4513"/>
-                  <!-- Hand wrapping pen-style -->
-                  <ellipse cx="50" cy="78" rx="16" ry="9" fill="#f5d5a0" stroke="#d4a574" stroke-width="1"/>
-                  <!-- Thumb (pinching from front) -->
-                  <ellipse cx="40" cy="67" rx="4" ry="6" fill="#f5d5a0" stroke="#d4a574" stroke-width="0.5"/>
-                  <!-- Index (pinching from back/top) -->
-                  <ellipse cx="60" cy="67" rx="4" ry="6" fill="#f5d5a0" stroke="#d4a574" stroke-width="0.5"/>
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Paddle blade (slightly tilted to suggest penhold angle) -->
+                  <g transform="rotate(-5 100 62)">
+                    <circle cx="100" cy="62" r="50" fill="#1a1a1a" stroke="#000" stroke-width="2.5"/>
+                    <circle cx="100" cy="62" r="46" fill="#2a2a2a" stroke="none"/>
+                    <circle cx="100" cy="62" r="50" fill="none" stroke="#000" stroke-width="3"/>
+                    <!-- SHORT penhold handle -->
+                    <rect x="92" y="110" width="16" height="16" rx="2" fill="#6b3410" stroke="#000" stroke-width="1.5"/>
+                  </g>
+
+                  <!-- Back fingers (curled on BACK of blade — shown as wrapping around from behind) -->
+                  <path d="M 70 122 Q 55 140, 65 165 Q 80 180, 100 180 Q 120 180, 135 165 Q 145 140, 130 122 Z"
+                        fill="#f5d5a0" stroke="#b08050" stroke-width="2"/>
+                  <!-- Back-finger segment lines showing 3 curled fingers -->
+                  <line x1="82" y1="145" x2="92" y2="158" stroke="#b08050" stroke-width="1.5"/>
+                  <line x1="100" y1="148" x2="105" y2="162" stroke="#b08050" stroke-width="1.5"/>
+                  <line x1="118" y1="145" x2="125" y2="158" stroke="#b08050" stroke-width="1.5"/>
+
+                  <!-- Wrist -->
+                  <rect x="88" y="175" width="24" height="22" rx="3" fill="#e8c088" stroke="#b08050" stroke-width="1.5"/>
+
+                  <!-- THUMB — pinching from LEFT side of handle (pen-grip style) -->
+                  <path d="M 82 108 Q 68 104, 58 118 Q 52 130, 62 134 Q 75 130, 88 118 Z"
+                        fill="#f59e0b" stroke="#92400e" stroke-width="2"/>
+                  <ellipse cx="64" cy="123" rx="2.5" ry="3" fill="#fcd88a" stroke="#92400e" stroke-width="0.4"/>
+
+                  <!-- INDEX — curling from RIGHT side of handle, meeting thumb at top (pen-grip V) -->
+                  <path d="M 118 108 Q 132 104, 142 118 Q 148 130, 138 134 Q 125 130, 112 118 Z"
+                        fill="#22c55e" stroke="#14532d" stroke-width="2"/>
+                  <ellipse cx="136" cy="123" rx="2.5" ry="3" fill="#bbf7d0" stroke="#14532d" stroke-width="0.4"/>
+
+                  <!-- Small "pinch" indicator arrows -->
+                  <path d="M 72 100 L 80 108" stroke="#f59e0b" stroke-width="1.2" stroke-linecap="round"/>
+                  <polygon points="80,108 76,104 78,111" fill="#f59e0b"/>
+                  <path d="M 128 100 L 120 108" stroke="#22c55e" stroke-width="1.2" stroke-linecap="round"/>
+                  <polygon points="120,108 124,104 122,111" fill="#22c55e"/>
+
+                  <!-- Leader labels -->
+                  <text x="20" y="125" font-size="11" fill="#f59e0b" font-weight="800">thumb</text>
+                  <line x1="50" y1="122" x2="58" y2="120" stroke="#f59e0b" stroke-width="1.5"/>
+
+                  <text x="152" y="125" font-size="11" fill="#22c55e" font-weight="800">index</text>
+                  <line x1="151" y1="122" x2="142" y2="120" stroke="#22c55e" stroke-width="1.5"/>
                 </svg>
               </div>
               <div class="grip-label">
                 <span class="grip-cn">直板</span>
                 <span class="grip-en">Penhold</span>
               </div>
-              <p class="grip-desc">Grip like holding a pen — thumb and index finger pinch the front of the handle. Traditional Chinese/Korean style. Lightning-quick wrist, strong forehand, close-to-table play.</p>
+              <p class="grip-desc">Grip like holding a pen. <strong>Thumb and index pinch the front of the handle</strong>, forming a V. Other three fingers curl on the <strong>back of the blade</strong>. Traditional Chinese / Korean style. Quick wrist, strong forehand, close-to-table play.</p>
+            </div>
+          </div>
+
+          <!-- Quick comparison callout -->
+          <div class="grip-compare">
+            <div class="gc-row">
+              <span class="gc-label">Thumb & index</span>
+              <span class="gc-shake">spread around blade</span>
+              <span class="gc-pen">pinched at handle</span>
+            </div>
+            <div class="gc-row">
+              <span class="gc-label">Other fingers</span>
+              <span class="gc-shake">wrap the handle</span>
+              <span class="gc-pen">curl on back of blade</span>
+            </div>
+            <div class="gc-row">
+              <span class="gc-label">Handle length</span>
+              <span class="gc-shake">long</span>
+              <span class="gc-pen">short</span>
             </div>
           </div>
         </section>
@@ -550,10 +626,10 @@
   }
 
   .grip-visual {
-    width: 90px;
-    height: 90px;
+    width: 130px;
+    height: 130px;
   }
-  .grip-visual svg { width: 100%; height: 100%; }
+  .grip-visual svg { width: 100%; height: 100%; display: block; }
 
   .grip-label {
     display: flex;
@@ -580,9 +656,47 @@
   .grip-desc {
     font-size: 11px;
     text-align: center;
-    line-height: 1.5;
+    line-height: 1.55;
     margin: 0;
   }
+  .grip-desc strong { color: var(--text); font-weight: 700; }
+
+  /* Grip comparison table */
+  .grip-compare {
+    margin-top: 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .gc-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    align-items: center;
+  }
+  .gc-row:last-child { border-bottom: none; }
+
+  .gc-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .gc-shake, .gc-pen {
+    font-size: 11px;
+    color: var(--text);
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .gc-shake { color: #fca5a5; }
+  .gc-pen { color: #cbd5e1; }
 
   /* Point list */
   .point-list {
