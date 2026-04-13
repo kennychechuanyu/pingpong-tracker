@@ -10,12 +10,13 @@ export const COIN_RULES = {
 }
 
 // Wealth tiers — rags-to-riches progression based on lifetime Pong Coins earned.
+// Thresholds are calibrated for per-game rewards (avg ~600 PC per match).
 export const COIN_TIERS = [
-  { threshold: 0,      name: 'Pauper',   zh: '貧民', color: '#8b7355' },
-  { threshold: 1000,   name: 'Hustler',  zh: '小販', color: '#9ca3af' },
-  { threshold: 5000,   name: 'Merchant', zh: '商人', color: '#cd853f' },
-  { threshold: 15000,  name: 'Tycoon',   zh: '富豪', color: '#f5c14a' },
-  { threshold: 50000,  name: 'Mogul',    zh: '大亨', color: '#c084fc' },
+  { threshold: 0,       name: 'Pauper',   zh: '貧民', color: '#8b7355' },
+  { threshold: 3000,    name: 'Hustler',  zh: '小販', color: '#9ca3af' },
+  { threshold: 15000,   name: 'Merchant', zh: '商人', color: '#cd853f' },
+  { threshold: 60000,   name: 'Tycoon',   zh: '富豪', color: '#f5c14a' },
+  { threshold: 200000,  name: 'Mogul',    zh: '大亨', color: '#c084fc' },
 ]
 
 // ── Helpers ──────────────────────────────────────────────────────────
