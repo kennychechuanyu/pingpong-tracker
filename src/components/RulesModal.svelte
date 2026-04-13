@@ -144,6 +144,31 @@
         <div class="divider"></div>
 
         <section>
+          <h3>Pong Coins (PC)</h3>
+          <p>A separate reward currency — you earn it by <strong>showing up</strong>, not just winning. Elo is how good you are; Pong Coins are how much you play.</p>
+          <div class="coin-rules">
+            <div class="coin-rule-row">
+              <span class="coin-rule-dot"></span>
+              <span class="coin-rule-label">Base reward</span>
+              <span class="coin-rule-val">+100 PC / match</span>
+            </div>
+            <div class="coin-rule-row">
+              <span class="coin-rule-dot win"></span>
+              <span class="coin-rule-label">Win bonus</span>
+              <span class="coin-rule-val">+50 PC</span>
+            </div>
+            <div class="coin-rule-row">
+              <span class="coin-rule-dot daily"></span>
+              <span class="coin-rule-label">Daily first match</span>
+              <span class="coin-rule-val">+100 PC</span>
+            </div>
+          </div>
+          <p class="coin-note">Losing still earns you the base + daily bonus. Keep playing and you'll climb the tiers: Rookie → Player → Regular → Veteran → Legend.</p>
+        </section>
+
+        <div class="divider"></div>
+
+        <section>
           <h3>Tiebreaker & Form</h3>
           <p>If two players have the same rating, the one with the higher win rate ranks higher.</p>
           <p>The coloured dots on each row show your last 5 results: <span class="w-dot">●</span> win, <span class="l-dot">●</span> loss, newest on the right.</p>
@@ -453,6 +478,56 @@
     font-style: italic;
     margin-top: 10px;
     line-height: 1.5;
+  }
+
+  /* Pong coin rules */
+  .coin-rules {
+    margin-top: 12px;
+    background: rgba(245,193,74,0.05);
+    border: 1px solid rgba(245,193,74,0.18);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .coin-rule-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .coin-rule-row:last-child { border-bottom: none; }
+
+  .coin-rule-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(245,193,74,0.85);
+    box-shadow: 0 0 6px rgba(245,193,74,0.4);
+    flex-shrink: 0;
+  }
+  .coin-rule-dot.win   { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+  .coin-rule-dot.daily { background: #5fb8e6; box-shadow: 0 0 6px rgba(95,184,230,0.4); }
+
+  .coin-rule-label {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 600;
+    color: #888;
+  }
+
+  .coin-rule-val {
+    font-size: 12px;
+    font-weight: 800;
+    color: #f5c14a;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .coin-note {
+    font-size: 11px;
+    color: #555;
+    line-height: 1.55;
+    margin-top: 10px;
   }
 
   /* K-factor */

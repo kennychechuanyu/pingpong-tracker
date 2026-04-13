@@ -2,6 +2,7 @@
   import { push } from 'svelte-spa-router'
   import EditPlayerModal from './EditPlayerModal.svelte'
   import { getAchievements } from '../lib/achievements.js'
+  import { computePlayerCoins, formatCoins, COIN_RULES } from '../lib/coins.js'
 
   export let player = null
   export let allMatches = []
@@ -198,6 +199,9 @@
   $: formWins = form10.filter(r => r === 'W').length
   $: formLosses = form10.filter(r => r === 'L').length
 
+  // Pong Coins
+  $: coinStats = player ? computePlayerCoins(player.id, allMatches) : null
+
   function rankOrdinalClass(r) {
     if (r === 1) return 'rank-gold'
     if (r === 2) return 'rank-silver'
@@ -270,6 +274,16 @@
               <span class="prov">provisional</span>
             {/if}
           </div>
+          {#if coinStats && coinStats.total > 0}
+            <div class="hero-coin-pill">
+              <svg viewBox="0 0 20 20" class="hero-coin-svg" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="10" cy="10" r="9" fill="#f5c14a" stroke="#7a4f00" stroke-width="1"/>
+                <circle cx="10" cy="10" r="7" fill="none" stroke="#7a4f00" stroke-width="0.6" stroke-dasharray="1,1" opacity="0.6"/>
+                <text x="10" y="13" text-anchor="middle" font-size="7" font-weight="900" fill="#5a3600" font-family="Georgia, serif">PC</text>
+              </svg>
+              <span class="hero-coin-val tnum">{formatCoins(coinStats.total)}</span>
+            </div>
+          {/if}
         </div>
       </div>
     </div>
@@ -307,6 +321,87 @@
               <span class="spark-label-key">NOW</span>
               <span class="tnum spark-label-val" class:up={endElo >= startElo} class:down={endElo < startElo}>{endElo}</span>
             </div>
+          </div>
+        </div>
+      </div>
+    {/if}
+
+    <!-- Pong Coins -->
+    {#if coinStats && coinStats.matchCount > 0}
+      <div class="card coin-card">
+        <div class="coin-sheen"></div>
+        <div class="coin-header">
+          <div class="coin-title">
+            <span class="coin-name">Pong Coins</span>
+            <span class="coin-abbr">PC</span>
+          </div>
+          <span class="coin-sub">earned by playing — win or lose</span>
+        </div>
+
+        <div class="coin-main">
+          <div class="big-coin">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="coinFace" cx="35%" cy="30%" r="75%">
+                  <stop offset="0%" stop-color="#ffe89a"/>
+                  <stop offset="45%" stop-color="#f5c14a"/>
+                  <stop offset="100%" stop-color="#a06a00"/>
+                </radialGradient>
+                <linearGradient id="coinEdge" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#d69a20"/>
+                  <stop offset="100%" stop-color="#6b4500"/>
+                </linearGradient>
+              </defs>
+              <circle cx="50" cy="50" r="47" fill="url(#coinEdge)"/>
+              <circle cx="50" cy="50" r="43" fill="url(#coinFace)" stroke="#7a4f00" stroke-width="1"/>
+              <circle cx="50" cy="50" r="36" fill="none" stroke="#7a4f00" stroke-width="0.8" stroke-dasharray="1.5,1.5" opacity="0.6"/>
+              <text x="50" y="62" text-anchor="middle" font-size="32" font-weight="900" fill="#5a3600" font-family="Georgia, serif" letter-spacing="-1">PC</text>
+              <!-- Shine highlight -->
+              <ellipse cx="38" cy="32" rx="15" ry="8" fill="#fff" opacity="0.35"/>
+            </svg>
+          </div>
+          <div class="coin-numeric">
+            <span class="coin-total tnum">{formatCoins(coinStats.total)}</span>
+            <span class="coin-total-lbl">total coins</span>
+          </div>
+        </div>
+
+        <!-- Tier badge + progress -->
+        <div class="tier-block">
+          <div class="tier-row">
+            <span class="tier-badge" style="color: {coinStats.tier.current.color}; border-color: {coinStats.tier.current.color}40; background: {coinStats.tier.current.color}12;">
+              <span class="tier-name">{coinStats.tier.current.name}</span>
+              <span class="tier-zh">{coinStats.tier.current.zh}</span>
+            </span>
+            {#if coinStats.tier.next}
+              <span class="tier-next tnum">
+                {formatCoins(coinStats.tier.toNext)} to <strong>{coinStats.tier.next.name}</strong>
+              </span>
+            {:else}
+              <span class="tier-next">max tier reached</span>
+            {/if}
+          </div>
+          <div class="tier-bar-track">
+            <div class="tier-bar-fill" style="width: {(coinStats.tier.progress * 100).toFixed(1)}%; background: linear-gradient(90deg, {coinStats.tier.current.color}, {coinStats.tier.next ? coinStats.tier.next.color : coinStats.tier.current.color});"></div>
+          </div>
+        </div>
+
+        <!-- Breakdown -->
+        <div class="coin-breakdown">
+          <div class="coin-line">
+            <span class="coin-line-dot"></span>
+            <span class="coin-line-label">Base <span class="coin-line-sub">· {COIN_RULES.BASE}/match × {coinStats.matchCount}</span></span>
+            <span class="coin-line-val tnum">{formatCoins(coinStats.breakdown.base)}</span>
+          </div>
+          <div class="coin-line">
+            <span class="coin-line-dot dot-win"></span>
+            <span class="coin-line-label">Win bonus <span class="coin-line-sub">· +{COIN_RULES.WIN_BONUS} × {coinStats.wins}</span></span>
+            <span class="coin-line-val tnum">{formatCoins(coinStats.breakdown.winBonus)}</span>
+          </div>
+          <div class="coin-line">
+            <span class="coin-line-dot dot-daily"></span>
+            <span class="coin-line-label">Daily bonus <span class="coin-line-sub">· first match each day</span></span>
+            <span class="coin-line-val tnum">{formatCoins(coinStats.breakdown.dailyBonus)}</span>
           </div>
         </div>
       </div>
@@ -1057,6 +1152,251 @@
     height: 100%;
     background: linear-gradient(90deg, var(--amber), rgba(245,158,11,0.6));
     border-radius: 3px;
+  }
+
+  /* ── PONG COINS ─────────────────────────── */
+
+  /* Hero pill (compact coin indicator in hero section) */
+  .hero-coin-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px 5px 6px;
+    margin-top: 10px;
+    background: linear-gradient(135deg, rgba(245,193,74,0.12), rgba(160,106,0,0.08));
+    border: 1px solid rgba(245,193,74,0.3);
+    border-radius: 999px;
+    box-shadow:
+      0 1px 3px rgba(160,106,0,0.15),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .hero-coin-svg { width: 18px; height: 18px; display: block; flex-shrink: 0; }
+
+  .hero-coin-val {
+    font-size: 13px;
+    font-weight: 800;
+    color: #f5c14a;
+    letter-spacing: 0.01em;
+  }
+
+  /* Main coin card */
+  .coin-card {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(245,193,74,0.1), transparent 70%),
+      var(--surface);
+    border-color: rgba(245,193,74,0.22);
+  }
+
+  .coin-sheen {
+    position: absolute;
+    top: -40%;
+    left: -40%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse, rgba(255,224,140,0.08), transparent 60%);
+    pointer-events: none;
+  }
+
+  .coin-header {
+    position: relative;
+    margin-bottom: 14px;
+  }
+
+  .coin-title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .coin-name {
+    font-size: 18px;
+    font-weight: 800;
+    color: #f5c14a;
+    letter-spacing: -0.005em;
+  }
+
+  .coin-abbr {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(245,193,74,0.55);
+    padding: 2px 6px;
+    border: 1px solid rgba(245,193,74,0.25);
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+  }
+
+  .coin-sub {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.55;
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  .coin-main {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0 18px;
+  }
+
+  .big-coin {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    filter: drop-shadow(0 4px 12px rgba(245,193,74,0.35));
+    animation: coinRise 0.5s ease-out both;
+  }
+  .big-coin svg { width: 100%; height: 100%; display: block; }
+
+  @keyframes coinRise {
+    from { transform: translateY(6px) scale(0.95); opacity: 0; }
+    to   { transform: translateY(0) scale(1);      opacity: 1; }
+  }
+
+  .coin-numeric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .coin-total {
+    font-size: 36px;
+    font-weight: 900;
+    color: #f5c14a;
+    letter-spacing: -1px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #ffe89a 0%, #f5c14a 55%, #c99320 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .coin-total-lbl {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 4px;
+  }
+
+  /* Tier badge + progress */
+  .tier-block {
+    position: relative;
+    padding: 12px 0;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .tier-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .tier-badge {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 7px;
+    padding: 5px 10px 5px 11px;
+    border-radius: 20px;
+    border: 1px solid;
+    font-weight: 800;
+  }
+
+  .tier-name {
+    font-size: 12px;
+    letter-spacing: 0.03em;
+  }
+
+  .tier-zh {
+    font-size: 10px;
+    opacity: 0.75;
+    letter-spacing: 0.05em;
+  }
+
+  .tier-next {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tier-next strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .tier-bar-track {
+    height: 6px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .tier-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 8px rgba(245,193,74,0.3);
+  }
+
+  /* Breakdown */
+  .coin-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .coin-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 2px;
+  }
+
+  .coin-line-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(245,193,74,0.8);
+    flex-shrink: 0;
+    box-shadow: 0 0 6px rgba(245,193,74,0.4);
+  }
+  .coin-line-dot.dot-win   { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+  .coin-line-dot.dot-daily { background: #5fb8e6; box-shadow: 0 0 6px rgba(95,184,230,0.4); }
+
+  .coin-line-label {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 0;
+  }
+
+  .coin-line-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 500;
+    opacity: 0.7;
+  }
+
+  .coin-line-val {
+    font-size: 13px;
+    font-weight: 800;
+    color: #f5c14a;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
   }
 
   /* WIN MARGINS */

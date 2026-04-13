@@ -1,6 +1,7 @@
 <script>
   import { newRatings, seriesRatings } from '../lib/elo.js'
-  import { logMatch, rankings, addChallenge, deleteChallenge, pendingChallenge, adminPlayers, rematchPlayers } from '../lib/stores.js'
+  import { logMatch, rankings, matches as matchesStore, addChallenge, deleteChallenge, pendingChallenge, adminPlayers, rematchPlayers } from '../lib/stores.js'
+  import { computeSingleMatchReward, formatCoins } from '../lib/coins.js'
   import AddPlayerModal from './AddPlayerModal.svelte'
   import PinPrompt from './PinPrompt.svelte'
 
@@ -217,6 +218,12 @@
             l: actualWinner.id === player1.id ? g.p2 : g.p1,
           }))
         : null
+      // Compute coin rewards BEFORE logging the match (so "daily bonus" detection
+      // still sees today as empty for this player if it is their first of the day).
+      const now = new Date().toISOString()
+      const winnerReward = computeSingleMatchReward(actualWinner.id, true, now, $matchesStore)
+      const loserReward  = computeSingleMatchReward(actualLoser.id, false, now, $matchesStore)
+
       await logMatch(actualWinner.id, actualLoser.id, ws, ls, stakesValue, bestOf, dbGameScores)
       if (activeChallenge) {
         await deleteChallenge(activeChallenge.id)
@@ -230,6 +237,8 @@
         newLoserElo: preview.loser,
         stakes: stakesValue, bestOf,
         gameScores: dbGameScores,
+        winnerCoins: winnerReward,
+        loserCoins: loserReward,
       }
       setTimeout(() => {
         result = null
@@ -303,6 +312,45 @@
             {/each}
           </div>
         {/if}
+
+        <!-- Pong Coin rewards -->
+        <div class="result-coins">
+          <div class="coin-reward coin-reward-winner">
+            <svg viewBox="0 0 24 24" class="cr-svg" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="11" fill="#f5c14a" stroke="#7a4f00" stroke-width="1.3"/>
+              <circle cx="12" cy="12" r="8.5" fill="none" stroke="#7a4f00" stroke-width="0.6" stroke-dasharray="1,1" opacity="0.6"/>
+              <text x="12" y="16" text-anchor="middle" font-size="9" font-weight="900" fill="#5a3600" font-family="Georgia, serif">PC</text>
+            </svg>
+            <div class="cr-info">
+              <span class="cr-name">{result.winner.name}</span>
+              <span class="cr-breakdown">
+                {#each result.winnerCoins.parts as part, i}
+                  {#if i > 0}<span class="cr-plus">+</span>{/if}
+                  <span class="cr-part">{part.amount}</span>
+                {/each}
+              </span>
+            </div>
+            <span class="cr-total tnum">+{formatCoins(result.winnerCoins.amount)}</span>
+          </div>
+          <div class="coin-reward coin-reward-loser">
+            <svg viewBox="0 0 24 24" class="cr-svg" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="11" fill="#f5c14a" stroke="#7a4f00" stroke-width="1.3"/>
+              <circle cx="12" cy="12" r="8.5" fill="none" stroke="#7a4f00" stroke-width="0.6" stroke-dasharray="1,1" opacity="0.6"/>
+              <text x="12" y="16" text-anchor="middle" font-size="9" font-weight="900" fill="#5a3600" font-family="Georgia, serif">PC</text>
+            </svg>
+            <div class="cr-info">
+              <span class="cr-name">{result.loser.name}</span>
+              <span class="cr-breakdown">
+                {#each result.loserCoins.parts as part, i}
+                  {#if i > 0}<span class="cr-plus">+</span>{/if}
+                  <span class="cr-part">{part.amount}</span>
+                {/each}
+              </span>
+            </div>
+            <span class="cr-total tnum">+{formatCoins(result.loserCoins.amount)}</span>
+          </div>
+        </div>
+
         {#if result.stakes}
           <div class="result-gamble">
             <span class="rg-icon">🎰</span>
@@ -1335,6 +1383,86 @@
   .result-elo.pos { color: var(--green); }
   .result-elo.neg { color: var(--red); }
   .result-vs { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.1em; flex-shrink: 0; }
+
+  /* Coin rewards in result card */
+  .result-coins {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 14px 0;
+    padding: 12px 12px 10px;
+    background:
+      radial-gradient(ellipse 100% 60% at 50% 0%, rgba(245,193,74,0.08), transparent 70%),
+      rgba(255,255,255,0.015);
+    border: 1px solid rgba(245,193,74,0.2);
+    border-radius: 12px;
+  }
+
+  .coin-reward {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 2px;
+    animation: coinPop 0.4s ease-out both;
+  }
+  .coin-reward-winner { animation-delay: 0.15s; }
+  .coin-reward-loser  { animation-delay: 0.3s; }
+
+  @keyframes coinPop {
+    from { transform: translateX(-6px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+  }
+
+  .cr-svg {
+    width: 26px;
+    height: 26px;
+    display: block;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 4px rgba(245,193,74,0.4));
+  }
+
+  .cr-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 1px;
+  }
+
+  .cr-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cr-breakdown {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    opacity: 0.65;
+  }
+
+  .cr-part { font-weight: 600; }
+  .cr-plus { opacity: 0.5; }
+
+  .cr-total {
+    font-size: 18px;
+    font-weight: 900;
+    color: #f5c14a;
+    letter-spacing: -0.01em;
+    background: linear-gradient(180deg, #ffe89a, #f5c14a, #c99320);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    flex-shrink: 0;
+  }
+
   .result-gamble {
     display: flex;
     align-items: center;
