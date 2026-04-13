@@ -144,6 +144,20 @@
         <div class="divider"></div>
 
         <section>
+          <h3>修行 Training Log</h3>
+          <p>A second track that rewards <strong>showing up</strong>, separate from Elo. Every match counts — win or lose. Climb the <strong>段 (Dan) ranks</strong> and collect <strong>印章 (Seals)</strong> as you log matches.</p>
+          <div class="dan-table">
+            <div class="dan-row"><span class="dan-zh-mini">一段</span><span class="dan-en-mini">1st Dan</span><span class="dan-req">10 matches</span></div>
+            <div class="dan-row"><span class="dan-zh-mini">四段</span><span class="dan-en-mini">4th Dan</span><span class="dan-req">100 matches</span></div>
+            <div class="dan-row"><span class="dan-zh-mini">七段</span><span class="dan-en-mini">7th Dan</span><span class="dan-req">550 matches</span></div>
+            <div class="dan-row"><span class="dan-zh-mini">十段</span><span class="dan-en-mini">10th Dan</span><span class="dan-req">1,500 matches</span></div>
+          </div>
+          <p class="dan-note">Seals (印章) unlock at thresholds: 初局 first match, 十局 ten, 百局 hundred, 千局 thousand, 初勝/十勝/百勝 for wins, 十日/百日 for days at the table, 連勝/十連 for streaks.</p>
+        </section>
+
+        <div class="divider"></div>
+
+        <section>
           <h3>Tiebreaker & Form</h3>
           <p>If two players have the same rating, the one with the higher win rate ranks higher.</p>
           <p>The coloured dots on each row show your last 5 results: <span class="w-dot">●</span> win, <span class="l-dot">●</span> loss, newest on the right.</p>
@@ -453,6 +467,52 @@
     font-style: italic;
     margin-top: 10px;
     line-height: 1.5;
+  }
+
+  /* Dan rank table */
+  .dan-table {
+    margin-top: 12px;
+    background: rgba(196,30,30,0.04);
+    border: 1px solid rgba(196,30,30,0.15);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .dan-row {
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .dan-row:last-child { border-bottom: none; }
+
+  .dan-zh-mini {
+    font-size: 14px;
+    font-weight: 800;
+    color: #e8a04a;
+    letter-spacing: 0.04em;
+  }
+
+  .dan-en-mini {
+    font-size: 11px;
+    color: #888;
+    font-weight: 600;
+  }
+
+  .dan-req {
+    font-size: 11px;
+    font-weight: 700;
+    color: #666;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dan-note {
+    font-size: 11px;
+    color: #555;
+    line-height: 1.55;
+    margin-top: 10px;
   }
 
   /* K-factor */
