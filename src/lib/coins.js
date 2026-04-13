@@ -7,13 +7,13 @@ export const COIN_RULES = {
   DAILY_BONUS: 100,  // extra for your first match of the day
 }
 
-// Tiers based on total coins earned (lifetime, not spendable balance).
+// Wealth tiers — rags-to-riches progression based on lifetime Pong Coins earned.
 export const COIN_TIERS = [
-  { threshold: 0,      name: 'Rookie',  zh: '新手', color: '#b07a3e' },
-  { threshold: 1000,   name: 'Player',  zh: '選手', color: '#a8a8a8' },
-  { threshold: 5000,   name: 'Regular', zh: '常客', color: '#e5c34a' },
-  { threshold: 15000,  name: 'Veteran', zh: '老將', color: '#5fb8e6' },
-  { threshold: 50000,  name: 'Legend',  zh: '傳奇', color: '#e8a04a' },
+  { threshold: 0,      name: 'Pauper',   zh: '貧民', color: '#8b7355' },
+  { threshold: 1000,   name: 'Hustler',  zh: '小販', color: '#9ca3af' },
+  { threshold: 5000,   name: 'Merchant', zh: '商人', color: '#cd853f' },
+  { threshold: 15000,  name: 'Tycoon',   zh: '富豪', color: '#f5c14a' },
+  { threshold: 50000,  name: 'Mogul',    zh: '大亨', color: '#c084fc' },
 ]
 
 // Compute coin stats for a single player from their match history.

@@ -163,7 +163,7 @@
               <span class="coin-rule-val">+100 PC</span>
             </div>
           </div>
-          <p class="coin-note">Losing still earns you the base + daily bonus. Keep playing and you'll climb the tiers: Rookie → Player → Regular → Veteran → Legend.</p>
+          <p class="coin-note">Losing still earns you the base + daily bonus. Keep stacking coins and climb the wealth ladder: <strong>Pauper</strong> 貧民 → <strong>Hustler</strong> 小販 → <strong>Merchant</strong> 商人 → <strong>Tycoon</strong> 富豪 → <strong>Mogul</strong> 大亨.</p>
         </section>
 
         <div class="divider"></div>
