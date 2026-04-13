@@ -1,7 +1,6 @@
 <script>
   import { push } from 'svelte-spa-router'
   import { deleteChallenge, pendingChallenge, enrichedChallenges, enrichedReactions, sessionPlayer, players, castReaction, rematchPlayers } from '../lib/stores.js'
-  import { computeMilestoneEvents } from '../lib/training.js'
   import EditMatchModal from './EditMatchModal.svelte'
   import PinPrompt from './PinPrompt.svelte'
 
@@ -69,20 +68,6 @@
     const h = Math.floor(m / 60)
     if (h < 24) return `${h}h ago`
     return null
-  }
-
-  // Milestone events keyed by matchId — computed from full match history + sifu lookup
-  $: milestonesByMatchId = computeMilestoneEvents(enrichedMatches, $players)
-  $: playersById = Object.fromEntries($players.map(p => [p.id, p]))
-
-  function milestonesFor(matchId) {
-    return milestonesByMatchId[matchId] ?? []
-  }
-
-  function sifuName(playerId) {
-    const p = playersById[playerId]
-    if (!p || !p.sifu_id) return null
-    return playersById[p.sifu_id]?.name ?? null
   }
 
   $: groupedMatches = (() => {
@@ -270,30 +255,6 @@
               </button>
             </div>
           </div>
-
-          <!-- Deadpan milestone dispatches triggered by this match -->
-          {#each milestonesFor(match.id) as event}
-            {@const p = playersById[event.playerId]}
-            {#if p}
-              <div class="dispatch" class:dispatch-dan={event.kind === 'dan'}>
-                <div class="dispatch-marks">
-                  <span class="dispatch-mark">—</span>
-                  <span class="dispatch-zh">{event.milestone.zh}</span>
-                  <span class="dispatch-mark">—</span>
-                </div>
-                <div class="dispatch-body">
-                  {#if event.kind === 'dan'}
-                    <span class="dispatch-name">{p.name}</span> has reached <span class="dispatch-hl">{event.milestone.zh}</span> · {event.milestone.en}.
-                  {:else}
-                    <span class="dispatch-name">{p.name}</span> has earned <span class="dispatch-hl">{event.milestone.zh}</span> · {event.milestone.en}.
-                  {/if}
-                  {#if sifuName(event.playerId)}
-                    <br>師父 <span class="dispatch-sifu">{sifuName(event.playerId)}</span> acknowledges the 弟子.
-                  {/if}
-                </div>
-              </div>
-            {/if}
-          {/each}
         {/each}
       {/each}
     </div>
@@ -380,70 +341,6 @@
     font-size: 11px; font-weight: 700; color: var(--text-muted);
     text-transform: uppercase; letter-spacing: 0.08em;
     white-space: nowrap;
-  }
-
-  /* Dispatch (milestone) */
-  .dispatch {
-    margin: 2px 12px 10px;
-    padding: 10px 14px 12px;
-    text-align: center;
-    background:
-      linear-gradient(180deg, rgba(196,30,30,0.03), transparent),
-      rgba(255,255,255,0.01);
-    border: 1px solid rgba(196,30,30,0.12);
-    border-radius: 10px;
-    font-family: 'Georgia', 'SimSun', serif;
-  }
-  .dispatch-dan {
-    border-color: rgba(232,160,74,0.18);
-    background:
-      linear-gradient(180deg, rgba(232,160,74,0.04), transparent),
-      rgba(255,255,255,0.01);
-  }
-
-  .dispatch-marks {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
-
-  .dispatch-mark {
-    font-size: 10px;
-    color: var(--text-muted);
-    opacity: 0.4;
-    letter-spacing: 0.2em;
-  }
-
-  .dispatch-zh {
-    font-size: 13px;
-    font-weight: 800;
-    color: #e8a04a;
-    letter-spacing: 0.1em;
-  }
-  .dispatch-dan .dispatch-zh { color: #e8a04a; }
-
-  .dispatch-body {
-    font-size: 11px;
-    color: var(--text-muted);
-    line-height: 1.55;
-    letter-spacing: 0.01em;
-  }
-
-  .dispatch-name {
-    color: var(--text);
-    font-weight: 700;
-  }
-
-  .dispatch-hl {
-    color: #e8a04a;
-    font-weight: 700;
-  }
-
-  .dispatch-sifu {
-    color: var(--text);
-    font-weight: 600;
   }
 
   /* Match card */

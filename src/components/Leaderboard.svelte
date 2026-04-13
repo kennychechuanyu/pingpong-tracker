@@ -5,7 +5,6 @@
   import GameRulesModal from './GameRulesModal.svelte'
   import AddPlayerModal from './AddPlayerModal.svelte'
   import { getAchievements } from '../lib/achievements.js'
-  import { getDanRank } from '../lib/training.js'
 
   export let rankings = []
   export let deltas = {}
@@ -240,9 +239,6 @@
                 {/if}
                 {#if player.team_id && teams.find(t => t.id === player.team_id)}
                   <span class="team-tag">{teams.find(t => t.id === player.team_id).emoji}</span>
-                {/if}
-                {#if getDanRank(player.games).current}
-                  <span class="dan-tag" title="{getDanRank(player.games).current.en}">{getDanRank(player.games).current.zh}</span>
                 {/if}
                 {#if isTop && !player.provisional}
                   <span class="crown">♛</span>
@@ -524,20 +520,6 @@
     letter-spacing: 0.03em;
     flex-shrink: 0;
     opacity: 0.7;
-  }
-
-  .dan-tag {
-    font-size: 10px;
-    font-weight: 800;
-    color: #fdf4e3;
-    background: linear-gradient(135deg, #c41e1e 0%, #8a0f0f 100%);
-    border: 1px solid #6a0a0a;
-    border-radius: 4px;
-    padding: 1px 5px;
-    letter-spacing: 0.04em;
-    line-height: 1.4;
-    flex-shrink: 0;
-    box-shadow: 0 1px 3px rgba(196,30,30,0.25);
   }
 
   .crown {
