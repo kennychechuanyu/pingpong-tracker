@@ -126,3 +126,73 @@ export function formatCoins(n) {
   const num = Math.max(0, Math.floor(n ?? 0))
   return num.toLocaleString('en-US')
 }
+
+// Compute a ranking of all players by lifetime Pong Coins earned.
+// Takes the existing rankings list (so each entry already carries player fields + Elo stats).
+// Returns a new array sorted by total coins descending, tiebreaker: more matches first.
+export function computeCoinRankings(rankings, matches) {
+  if (!Array.isArray(rankings) || !Array.isArray(matches)) return []
+
+  // Sort matches once — cheaper than sorting inside computePlayerCoins for every player
+  const sortedMatches = [...matches].sort((a, b) =>
+    (a.played_at ?? '') < (b.played_at ?? '') ? -1 : (a.played_at ?? '') > (b.played_at ?? '') ? 1 : 0
+  )
+
+  const withStats = rankings.map(p => {
+    const stats = computePlayerCoinsSorted(p.id, sortedMatches)
+    return {
+      ...p,
+      coins: stats.total,
+      coinMatches: stats.matchCount,
+      coinWins: stats.wins,
+      coinTier: stats.tier,
+      coinBreakdown: stats.breakdown,
+    }
+  })
+
+  return withStats.sort((a, b) => {
+    if (b.coins !== a.coins) return b.coins - a.coins
+    if (b.coinMatches !== a.coinMatches) return b.coinMatches - a.coinMatches
+    return (b.coinWins ?? 0) - (a.coinWins ?? 0)
+  })
+}
+
+// Internal helper: compute coins from a pre-sorted match list (no re-sorting).
+function computePlayerCoinsSorted(playerId, sortedMatches) {
+  let total = 0
+  let matchCount = 0
+  let wins = 0
+  let base = 0
+  let winBonus = 0
+  let dailyBonus = 0
+  const daysCounted = new Set()
+
+  for (const m of sortedMatches) {
+    if (m.winner_id !== playerId && m.loser_id !== playerId) continue
+
+    total += COIN_RULES.BASE
+    base += COIN_RULES.BASE
+    matchCount++
+
+    if (m.winner_id === playerId) {
+      total += COIN_RULES.WIN_BONUS
+      winBonus += COIN_RULES.WIN_BONUS
+      wins++
+    }
+
+    const day = (m.played_at ?? '').slice(0, 10)
+    if (day && !daysCounted.has(day)) {
+      daysCounted.add(day)
+      total += COIN_RULES.DAILY_BONUS
+      dailyBonus += COIN_RULES.DAILY_BONUS
+    }
+  }
+
+  return {
+    total,
+    matchCount,
+    wins,
+    breakdown: { base, winBonus, dailyBonus },
+    tier: getTier(total),
+  }
+}

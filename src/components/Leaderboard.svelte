@@ -5,6 +5,7 @@
   import GameRulesModal from './GameRulesModal.svelte'
   import AddPlayerModal from './AddPlayerModal.svelte'
   import { getAchievements } from '../lib/achievements.js'
+  import { computeCoinRankings, formatCoins } from '../lib/coins.js'
 
   export let rankings = []
   export let deltas = {}
@@ -16,9 +17,12 @@
   let recordsOpen = false
   let gameRulesOpen = false
   let addPlayerOpen = false
+  let viewMode = 'elo' // 'elo' | 'coins'
 
   $: ranked = rankings.filter(p => p.games > 0)
   $: unranked = rankings.filter(p => p.games === 0)
+  // Coin ranking — only includes players who've played at least one match
+  $: coinRanked = computeCoinRankings(ranked, matches)
 
   // ── Weekly Awards ──────────────────────────────
   $: weekStart = (() => {
@@ -183,6 +187,110 @@
       <p class="sub">Tap the person icon above to add your crew.</p>
     </div>
   {:else}
+    <!-- View toggle: Elo vs Pong Coins -->
+    <div class="view-toggle">
+      <button
+        class="toggle-pill"
+        class:toggle-active={viewMode === 'elo'}
+        on:click={() => (viewMode = 'elo')}
+        type="button"
+      >
+        <span class="toggle-icon">⚡</span>
+        <span class="toggle-label">Elo</span>
+      </button>
+      <button
+        class="toggle-pill toggle-pill-coins"
+        class:toggle-active={viewMode === 'coins'}
+        on:click={() => (viewMode = 'coins')}
+        type="button"
+      >
+        <svg viewBox="0 0 20 20" class="toggle-coin-svg" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="10" cy="10" r="9" fill="#f5c14a" stroke="#7a4f00" stroke-width="1"/>
+          <circle cx="10" cy="10" r="7" fill="none" stroke="#7a4f00" stroke-width="0.6" stroke-dasharray="1,1" opacity="0.6"/>
+          <text x="10" y="13" text-anchor="middle" font-size="7" font-weight="900" fill="#5a3600" font-family="Georgia, serif">PC</text>
+        </svg>
+        <span class="toggle-label">Pong Coins</span>
+      </button>
+    </div>
+
+    {#if viewMode === 'coins'}
+      <!-- ── Pong Coin Ranking ─────────────────────── -->
+      <ul class="coin-list">
+        {#each coinRanked as player, i}
+          {@const isPodium = i < 3}
+          {@const pc = podiumColors[i]}
+
+          <li style="animation-delay: {i * 40}ms">
+            <button
+              class="row coin-row"
+              class:podium={isPodium}
+              style={isPodium
+                ? `border-color: ${pc.border}; border-left: 4px solid ${pc.accent}; background: linear-gradient(100deg, ${pc.bg} 0%, var(--surface) 55%);`
+                : ''}
+              on:click={() => push(`/player/${player.id}`)}
+            >
+              <!-- Rank -->
+              <div class="rank-col" class:rank-podium={isPodium}>
+                {#if isPodium}
+                  <span class="medal-num" style="color: {pc.accent}">{i + 1}</span>
+                {:else}
+                  <span class="rank-num">{i + 1}</span>
+                {/if}
+              </div>
+
+              <!-- Avatar -->
+              <div
+                class="avatar-cell"
+                class:avatar-podium={isPodium}
+                style={isPodium ? `border: 2px solid ${pc.accent}40;` : ''}
+              >
+                {#if player.avatar_url}
+                  <img src={player.avatar_url} alt={player.name} class="avatar-img" />
+                {:else}
+                  <div class="avatar-initial" style={isPodium ? `color: ${pc.accent}; background: ${pc.accent}18;` : ''}>
+                    {player.name[0].toUpperCase()}
+                  </div>
+                {/if}
+              </div>
+
+              <!-- Info -->
+              <div class="info">
+                <div class="name-row">
+                  <span class="name" class:name-podium={isPodium}>{player.name}</span>
+                  <span class="tier-chip" style="color: {player.coinTier.current.color}; border-color: {player.coinTier.current.color}40; background: {player.coinTier.current.color}14;">
+                    {player.coinTier.current.name}
+                  </span>
+                </div>
+                <div class="stats-row">
+                  <span class="coin-match-count tnum">{player.coinMatches}</span>
+                  <span class="coin-match-lbl">matches</span>
+                  <span class="stat-sep">·</span>
+                  <span class="coin-wins-count tnum">{player.coinWins}W</span>
+                </div>
+              </div>
+
+              <!-- Coin total -->
+              <div class="coin-total-col">
+                <div class="coin-total-row">
+                  <svg viewBox="0 0 20 20" class="coin-mini-svg" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="10" cy="10" r="9" fill="#f5c14a" stroke="#7a4f00" stroke-width="1"/>
+                    <circle cx="10" cy="10" r="7" fill="none" stroke="#7a4f00" stroke-width="0.6" stroke-dasharray="1,1" opacity="0.6"/>
+                    <text x="10" y="13" text-anchor="middle" font-size="7" font-weight="900" fill="#5a3600" font-family="Georgia, serif">PC</text>
+                  </svg>
+                  <span class="coin-big tnum">{formatCoins(player.coins)}</span>
+                </div>
+              </div>
+
+              <div class="chevron">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+            </button>
+          </li>
+        {/each}
+      </ul>
+    {:else}
     <ul>
       {#each ranked as player, i}
         {@const delta = deltas[player.id] ?? 0}
@@ -298,6 +406,7 @@
         </li>
       {/each}
     </ul>
+    {/if}
 
     {#if unranked.length > 0}
       <div class="unranked-section">
@@ -784,6 +893,147 @@
     font-size: 12px;
     line-height: 1;
     flex-shrink: 0;
+  }
+
+  /* ── View toggle (Elo / Pong Coins) ─────────── */
+  .view-toggle {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  .toggle-pill {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 12px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.18s, color 0.18s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .toggle-pill:not(.toggle-active):active {
+    background: rgba(255,255,255,0.03);
+  }
+
+  .toggle-pill.toggle-active {
+    background: var(--amber);
+    color: #000;
+  }
+
+  .toggle-pill-coins.toggle-active {
+    background: linear-gradient(135deg, #ffe89a 0%, #f5c14a 55%, #c99320 100%);
+    color: #3a2400;
+    box-shadow: 0 2px 10px rgba(245,193,74,0.35);
+  }
+
+  .toggle-icon {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .toggle-coin-svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+  }
+
+  .toggle-label {
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Pong Coin ranking rows ─────────────────── */
+  .coin-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .coin-row { /* inherits from .row */ }
+
+  .tier-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid;
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+  }
+
+  .coin-match-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .coin-match-lbl {
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.75;
+  }
+
+  .coin-wins-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    opacity: 0.85;
+  }
+
+  .coin-total-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    min-width: 0;
+    flex-shrink: 0;
+    padding-right: 4px;
+  }
+
+  .coin-total-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .coin-mini-svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+    flex-shrink: 0;
+    filter: drop-shadow(0 1px 3px rgba(245,193,74,0.4));
+  }
+
+  .coin-big {
+    font-size: 17px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    background: linear-gradient(180deg, #ffe89a 0%, #f5c14a 55%, #c99320 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   /* Unranked / yet to play */
