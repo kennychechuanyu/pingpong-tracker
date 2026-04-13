@@ -179,7 +179,10 @@
     ? player.history[player.history.length - 1] - player.history[player.history.length - 2]
     : 0
 
-  $: rank = player ? allPlayers.findIndex(p => p.id === player.id) : -1
+  // Only players with at least 1 match are ranked — matches Leaderboard behavior.
+  // 0-game players have no rank number (they live in "Yet to play" on the leaderboard).
+  $: rankedList = allPlayers.filter(p => p.games > 0)
+  $: rank = player && player.games > 0 ? rankedList.findIndex(p => p.id === player.id) : -1
   $: rankDisplay = rank >= 0 ? rank + 1 : null
 
   $: achievements = player ? getAchievements(player, rank) : []

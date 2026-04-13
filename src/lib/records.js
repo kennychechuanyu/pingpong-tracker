@@ -1,22 +1,6 @@
+import { expected, newRatings, seriesRatings } from './elo.js'
+
 const STARTING_ELO = 1000
-
-function expected(ratingA, ratingB) {
-  return 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400))
-}
-
-function dynamicK(gamesPlayed) {
-  if (gamesPlayed < 10) return 40
-  if (gamesPlayed < 30) return 32
-  return 24
-}
-
-function marginMultiplier(winnerScore, loserScore) {
-  if (winnerScore === 0) return 1.0
-  const normalised = (winnerScore - loserScore) / winnerScore * 11
-  if (normalised >= 9) return 1.3
-  if (normalised >= 5) return 1.15
-  return 1.0
-}
 
 /**
  * Compute all-time records from rankings and matches data.
@@ -95,46 +79,24 @@ export function computeRecords(rankings, matches) {
       }
     }
 
-    // Compute new ratings (replicate elo.js logic)
+    // Delegate Elo math to elo.js to keep records in sync with rankings
     let newW, newL, gameCount
     if (m.game_scores && m.game_scores.length > 0) {
-      const eW = expected(prevW, prevL)
-      const eL = expected(prevL, prevW)
-      const kW = dynamicK(gamesPlayed[m.winner_id])
-      const kL = dynamicK(gamesPlayed[m.loser_id])
-      let deltaW = 0
-      let deltaL = 0
-      for (const g of m.game_scores) {
-        const high = Math.max(g.w, g.l)
-        const low = Math.min(g.w, g.l)
-        const mult = marginMultiplier(high, low)
-        if (g.w > g.l) {
-          deltaW += kW * mult * (1 - eW)
-          deltaL += kL * mult * (0 - eL)
-        } else {
-          deltaW += kW * mult * (0 - eW)
-          deltaL += kL * mult * (1 - eL)
-        }
-      }
-      newW = Math.round(prevW + deltaW)
-      newL = Math.round(prevL + deltaL)
+      const r = seriesRatings(prevW, prevL, m.game_scores, gamesPlayed[m.winner_id], gamesPlayed[m.loser_id])
+      newW = r.winner
+      newL = r.loser
       gameCount = m.game_scores.length
     } else if (m.best_of > 1) {
-      const eW = expected(prevW, prevL)
-      const eL = expected(prevL, prevW)
-      const kW = dynamicK(gamesPlayed[m.winner_id])
-      const kL = dynamicK(gamesPlayed[m.loser_id])
-      newW = Math.round(prevW + kW * (1 - eW))
-      newL = Math.round(prevL + kL * (0 - eL))
+      // Legacy series: flat win/loss, no margin multiplier.
+      // Pass score 1-1 so marginMultiplier returns 1.0 (margin = 0 → normalised = 0 → 1.0).
+      const r = newRatings(prevW, prevL, 1, 1, gamesPlayed[m.winner_id], gamesPlayed[m.loser_id])
+      newW = r.winner
+      newL = r.loser
       gameCount = 1
     } else {
-      const eW = expected(prevW, prevL)
-      const eL = expected(prevL, prevW)
-      const mult = marginMultiplier(m.winner_score, m.loser_score)
-      const kW = dynamicK(gamesPlayed[m.winner_id])
-      const kL = dynamicK(gamesPlayed[m.loser_id])
-      newW = Math.round(prevW + kW * mult * (1 - eW))
-      newL = Math.round(prevL + kL * mult * (0 - eL))
+      const r = newRatings(prevW, prevL, m.winner_score, m.loser_score, gamesPlayed[m.winner_id], gamesPlayed[m.loser_id])
+      newW = r.winner
+      newL = r.loser
       gameCount = 1
     }
 
