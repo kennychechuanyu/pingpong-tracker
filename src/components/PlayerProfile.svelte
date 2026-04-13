@@ -468,81 +468,81 @@
         </table>
       </div>
     {/if}
-  </div>
 
-  {#if sifu || disciples.length > 0 || rival}
-    <div class="card sifu-card">
-      <div class="sifu-row">
-        <div class="sifu-role-wrap">
-          <span class="sifu-role-zh">師父</span>
-          <span class="sifu-role-en">Sifu</span>
-        </div>
-        {#if sifu}
-          <button class="sifu-person" on:click={() => push(`/player/${sifu.id}`)}>
-            <div class="sifu-avatar">
-              {#if sifu.avatar_url}
-                <img src={sifu.avatar_url} alt={sifu.name} />
-              {:else}
-                {sifu.name[0].toUpperCase()}
-              {/if}
-            </div>
-            <span class="sifu-name">{sifu.name}</span>
-          </button>
-        {:else}
-          <span class="sifu-none">—</span>
-        {/if}
-      </div>
-
-      {#if disciples.length > 0}
+    {#if sifu || disciples.length > 0 || rival}
+      <div class="card sifu-card">
         <div class="sifu-row">
           <div class="sifu-role-wrap">
-            <span class="sifu-role-zh">門徒</span>
-            <span class="sifu-role-en">Students</span>
+            <span class="sifu-role-zh">師父</span>
+            <span class="sifu-role-en">Sifu</span>
           </div>
-          <div class="disciples-list">
-            {#each disciples as d}
-              <button class="sifu-person" on:click={() => push(`/player/${d.id}`)}>
-                <div class="sifu-avatar">
-                  {#if d.avatar_url}
-                    <img src={d.avatar_url} alt={d.name} />
-                  {:else}
-                    {d.name[0].toUpperCase()}
-                  {/if}
-                </div>
-                <span class="sifu-name">{d.name}</span>
-              </button>
-            {/each}
-          </div>
+          {#if sifu}
+            <button class="sifu-person" on:click={() => push(`/player/${sifu.id}`)}>
+              <div class="sifu-avatar">
+                {#if sifu.avatar_url}
+                  <img src={sifu.avatar_url} alt={sifu.name} />
+                {:else}
+                  {sifu.name[0].toUpperCase()}
+                {/if}
+              </div>
+              <span class="sifu-name">{sifu.name}</span>
+            </button>
+          {:else}
+            <span class="sifu-none">—</span>
+          {/if}
         </div>
-      {/if}
 
-      {#if rival}
-        <div class="sifu-row rival-row">
-          <div class="sifu-role-wrap">
-            <span class="sifu-role-zh rival-zh">宿敵</span>
-            <span class="sifu-role-en">Archrival</span>
-          </div>
-          <button class="sifu-person" on:click={() => push(`/player/${rival.id}`)}>
-            <div class="sifu-avatar rival-avatar">
-              {#if rival.avatar_url}
-                <img src={rival.avatar_url} alt={rival.name} />
-              {:else}
-                {rival.name[0].toUpperCase()}
-              {/if}
+        {#if disciples.length > 0}
+          <div class="sifu-row">
+            <div class="sifu-role-wrap">
+              <span class="sifu-role-zh">門徒</span>
+              <span class="sifu-role-en">Students</span>
             </div>
-            <span class="sifu-name rival-name">{rival.name}</span>
-          </button>
-        </div>
-      {/if}
-    </div>
-  {/if}
+            <div class="disciples-list">
+              {#each disciples as d}
+                <button class="sifu-person" on:click={() => push(`/player/${d.id}`)}>
+                  <div class="sifu-avatar">
+                    {#if d.avatar_url}
+                      <img src={d.avatar_url} alt={d.name} />
+                    {:else}
+                      {d.name[0].toUpperCase()}
+                    {/if}
+                  </div>
+                  <span class="sifu-name">{d.name}</span>
+                </button>
+              {/each}
+            </div>
+          </div>
+        {/if}
+
+        {#if rival}
+          <div class="sifu-row rival-row">
+            <div class="sifu-role-wrap">
+              <span class="sifu-role-zh rival-zh">宿敵</span>
+              <span class="sifu-role-en">Archrival</span>
+            </div>
+            <button class="sifu-person" on:click={() => push(`/player/${rival.id}`)}>
+              <div class="sifu-avatar rival-avatar">
+                {#if rival.avatar_url}
+                  <img src={rival.avatar_url} alt={rival.name} />
+                {:else}
+                  {rival.name[0].toUpperCase()}
+                {/if}
+              </div>
+              <span class="sifu-name rival-name">{rival.name}</span>
+            </button>
+          </div>
+        {/if}
+      </div>
+    {/if}
+  </div>
 
   <EditPlayerModal bind:open={editOpen} {player} {allPlayers} />
 {/if}
 
 <style>
   .wrap {
-    padding: 16px 16px calc(var(--nav-h) + 24px + env(safe-area-inset-bottom));
+    padding: 16px 16px calc(var(--nav-h) + 48px + env(safe-area-inset-bottom));
     max-width: 480px;
     margin: 0 auto;
   }
@@ -1193,9 +1193,7 @@
   .sifu-card {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    max-width: 480px;
-    margin: 0 auto 12px;
+    gap: 14px;
   }
 
   .sifu-row {
