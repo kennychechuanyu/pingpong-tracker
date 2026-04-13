@@ -19,13 +19,13 @@
   let pinPromptOpen = false
 
   // ── Log mode ──────────────────────────────
-  let winner = null
-  let loser = null
-  let winnerScore = 11
-  let loserScore = 0
+  let player1 = null
+  let player2 = null
+  let p1Score = ''
+  let p2Score = ''
   let gameScores = []
-  let curW = ''
-  let curL = ''
+  let curP1 = ''
+  let curP2 = ''
   let submitting = false
   let result = null
   let logError = ''
@@ -55,8 +55,8 @@
 
   // Pre-fill from a rematch button in History
   $: if ($rematchPlayers) {
-    winner = $rematchPlayers.winner
-    loser = $rematchPlayers.loser
+    player1 = $rematchPlayers.winner
+    player2 = $rematchPlayers.loser
     rematchPlayers.set(null)
     mode = 'log'
   }
@@ -69,31 +69,67 @@
     stakesCustom = !preset && activeChallenge.stakes ? activeChallenge.stakes : ''
     const bo = activeChallenge.best_of ?? 1
     bestOf = bo
-    gameScores = []; curW = ''; curL = ''
-    if (bo === 1) { winnerScore = 11; loserScore = 0 }
+    gameScores = []; curP1 = ''; curP2 = ''
+    if (bo === 1) { p1Score = ''; p2Score = '' }
     mode = 'log'
   }
 
+  // ── Series / winner derivation ────────────
+  $: p1Wins = gameScores.filter(g => g.p1 > g.p2).length
+  $: p2Wins = gameScores.filter(g => g.p2 > g.p1).length
+  $: seriesWins = Math.max(p1Wins, p2Wins)
+  $: seriesLosses = Math.min(p1Wins, p2Wins)
+  $: seriesComplete = bestOf > 1 && (p1Wins === needed || p2Wins === needed)
+
+  // Auto-determine winner from scores
+  $: actualWinner = (() => {
+    if (!player1 || !player2) return null
+    if (bestOf > 1) {
+      if (p1Wins === needed) return player1
+      if (p2Wins === needed) return player2
+      return null
+    }
+    const p1 = Number.isFinite(parseInt(p1Score)) ? parseInt(p1Score) : null
+    const p2 = Number.isFinite(parseInt(p2Score)) ? parseInt(p2Score) : null
+    if (p1 == null || p2 == null) return null
+    if (p1 > p2) return player1
+    if (p2 > p1) return player2
+    return null
+  })()
+  $: actualLoser = actualWinner ? (actualWinner.id === player1?.id ? player2 : player1) : null
+
+  // ws/ls represent the match winner's scores (used for logMatch + Elo preview)
+  $: ws = actualWinner && bestOf > 1
+    ? (actualWinner.id === player1?.id ? p1Wins : p2Wins)
+    : actualWinner ? (actualWinner.id === player1?.id ? parseInt(p1Score) : parseInt(p2Score)) : 0
+  $: ls = actualLoser && bestOf > 1
+    ? (actualLoser.id === player1?.id ? p1Wins : p2Wins)
+    : actualLoser ? (actualLoser.id === player1?.id ? parseInt(p1Score) : parseInt(p2Score)) : 0
+
   // ── Elo preview ───────────────────────────
-  $: winnerRanking = $rankings.find(r => r.id === winner?.id)
-  $: loserRanking  = $rankings.find(r => r.id === loser?.id)
+  $: winnerRanking = $rankings.find(r => r.id === actualWinner?.id)
+  $: loserRanking  = $rankings.find(r => r.id === actualLoser?.id)
   $: winnerElo   = winnerRanking?.elo ?? 1000
   $: loserElo    = loserRanking?.elo  ?? 1000
   $: winnerGames = winnerRanking?.gamesPlayed ?? 0
   $: loserGames  = loserRanking?.gamesPlayed  ?? 0
-  $: seriesWins = gameScores.filter(g => g.w > g.l).length
-  $: seriesLosses = gameScores.filter(g => g.l > g.w).length
-  $: seriesComplete = bestOf > 1 && seriesWins === needed
-  $: ws = bestOf > 1 ? seriesWins : (Number.isFinite(parseInt(winnerScore)) ? parseInt(winnerScore) : 11)
-  $: ls = bestOf > 1 ? seriesLosses : (Number.isFinite(parseInt(loserScore)) ? parseInt(loserScore) : 0)
-  $: preview = winner && loser
+
+  // Convert gameScores to winner's perspective for seriesRatings
+  $: winnerPerspectiveGameScores = actualWinner
+    ? gameScores.map(g => ({
+        w: actualWinner.id === player1?.id ? g.p1 : g.p2,
+        l: actualWinner.id === player1?.id ? g.p2 : g.p1,
+      }))
+    : []
+
+  $: preview = actualWinner && actualLoser
     ? (bestOf > 1
-      ? (gameScores.length > 0 ? seriesRatings(winnerElo, loserElo, gameScores, winnerGames, loserGames) : null)
+      ? (gameScores.length > 0 ? seriesRatings(winnerElo, loserElo, winnerPerspectiveGameScores, winnerGames, loserGames) : null)
       : newRatings(winnerElo, loserElo, ws, ls, winnerGames, loserGames))
     : null
   $: winnerDelta = preview ? preview.winner - winnerElo : null
   $: loserDelta  = preview ? preview.loser  - loserElo  : null
-  $: winProb = winner && loser
+  $: winProb = actualWinner && actualLoser
     ? Math.round((1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400))) * 100)
     : null
 
@@ -121,16 +157,16 @@
 
   function onBestOfChange(n) {
     bestOf = n
-    gameScores = []; curW = ''; curL = ''
-    if (n === 1) { winnerScore = 11; loserScore = 0 }
+    gameScores = []; curP1 = ''; curP2 = ''
+    if (n === 1) { p1Score = ''; p2Score = '' }
   }
 
   function confirmGame() {
-    const w = parseInt(curW)
-    const l = parseInt(curL)
-    if (isNaN(w) || isNaN(l) || w === l || w < 0 || l < 0) return
-    gameScores = [...gameScores, { w, l }]
-    curW = ''; curL = ''
+    const p1 = parseInt(curP1)
+    const p2 = parseInt(curP2)
+    if (isNaN(p1) || isNaN(p2) || p1 === p2 || p1 < 0 || p2 < 0) return
+    gameScores = [...gameScores, { p1, p2 }]
+    curP1 = ''; curP2 = ''
   }
 
   function undoLastGame() {
@@ -138,24 +174,27 @@
   }
 
   $: canConfirmGame = (() => {
-    const w = parseInt(curW)
-    const l = parseInt(curL)
-    return !isNaN(w) && !isNaN(l) && w !== l && w >= 0 && l >= 0
+    const p1 = parseInt(curP1)
+    const p2 = parseInt(curP2)
+    return !isNaN(p1) && !isNaN(p2) && p1 !== p2 && p1 >= 0 && p2 >= 0
   })()
 
   function validate() {
-    if (!winner) return 'Pick who won first.'
-    if (!loser) return 'Pick who lost too.'
+    if (!player1) return 'Pick player 1.'
+    if (!player2) return 'Pick player 2.'
     if (bestOf > 1) {
-      if (!seriesComplete) return `Enter all game scores (first to ${needed} wins).`
+      if (!seriesComplete) return `Enter game scores until someone reaches ${needed} wins.`
     } else {
-      if (isNaN(ws) || isNaN(ls) || ws < 0 || ls < 0) return 'Scores need to be positive.'
-      if (ws <= ls) return "Winner's score has to be higher."
+      const p1 = parseInt(p1Score)
+      const p2 = parseInt(p2Score)
+      if (isNaN(p1) || isNaN(p2)) return 'Enter both scores.'
+      if (p1 < 0 || p2 < 0) return 'Scores cannot be negative.'
+      if (p1 === p2) return 'Scores cannot be equal.'
     }
     return ''
   }
 
-  $: pinPlayers = [winner, loser].filter(p => p?.pin_hash)
+  $: pinPlayers = [player1, player2].filter(p => p?.pin_hash)
   $: allPinPlayers = [...pinPlayers, ...$adminPlayers.filter(a => !pinPlayers.find(p => p?.id === a.id))]
 
   function requestSubmit() {
@@ -171,25 +210,32 @@
     submitting = true
     logError = ''
     try {
-      await logMatch(winner.id, loser.id, ws, ls, stakesValue, bestOf, bestOf > 1 ? gameScores : null)
+      // Convert gameScores to winner's perspective for DB storage
+      const dbGameScores = bestOf > 1
+        ? gameScores.map(g => ({
+            w: actualWinner.id === player1.id ? g.p1 : g.p2,
+            l: actualWinner.id === player1.id ? g.p2 : g.p1,
+          }))
+        : null
+      await logMatch(actualWinner.id, actualLoser.id, ws, ls, stakesValue, bestOf, dbGameScores)
       if (activeChallenge) {
         await deleteChallenge(activeChallenge.id)
         pendingChallenge.set(null)
       }
       result = {
-        winner, loser,
+        winner: actualWinner, loser: actualLoser,
         winnerScore: ws, loserScore: ls,
         winnerDelta, loserDelta,
         newWinnerElo: preview.winner,
         newLoserElo: preview.loser,
         stakes: stakesValue, bestOf,
-        gameScores: bestOf > 1 ? [...gameScores] : null,
+        gameScores: dbGameScores,
       }
       setTimeout(() => {
         result = null
-        winner = null; loser = null
-        winnerScore = 11; loserScore = 0
-        gameScores = []; curW = ''; curL = ''
+        player1 = null; player2 = null
+        p1Score = ''; p2Score = ''
+        gameScores = []; curP1 = ''; curP2 = ''
         activeChallenge = null
         stakesPreset = null; stakesCustom = ''; bestOf = 1
       }, 3500)
@@ -282,16 +328,16 @@
 
       <section>
         <div class="section-header">
-          <span class="label">Who Won</span>
-          {#if winner}<span class="selected-name">{winner.name}</span>{/if}
+          <span class="label">Player 1</span>
+          {#if player1}<span class="selected-name">{player1.name}</span>{/if}
         </div>
         <div class="player-scroll">
           {#each players as p}
             <button
               class="ps-item"
-              class:chosen={winner?.id === p.id}
-              class:dimmed={loser?.id === p.id}
-              on:click={() => { winner = p; if (loser?.id === p.id) loser = null; logError = '' }}
+              class:chosen={player1?.id === p.id}
+              class:dimmed={player2?.id === p.id}
+              on:click={() => { player1 = p; if (player2?.id === p.id) player2 = null; logError = '' }}
               type="button"
             >
               <div class="ps-avatar">
@@ -300,7 +346,7 @@
                 {:else}
                   {p.name[0].toUpperCase()}
                 {/if}
-                {#if winner?.id === p.id}
+                {#if player1?.id === p.id}
                   <div class="ps-check">✓</div>
                 {/if}
               </div>
@@ -312,17 +358,17 @@
 
       <section>
         <div class="section-header">
-          <span class="label">Who Lost</span>
-          {#if loser}<span class="selected-name">{loser.name}</span>{/if}
+          <span class="label">Player 2</span>
+          {#if player2}<span class="selected-name">{player2.name}</span>{/if}
         </div>
         <div class="player-scroll">
           {#each players as p}
             <button
               class="ps-item"
-              class:chosen={loser?.id === p.id}
-              class:dimmed={winner?.id === p.id}
-              on:click={() => { loser = p; logError = '' }}
-              disabled={winner?.id === p.id}
+              class:chosen={player2?.id === p.id}
+              class:dimmed={player1?.id === p.id}
+              on:click={() => { player2 = p; logError = '' }}
+              disabled={player1?.id === p.id}
               type="button"
             >
               <div class="ps-avatar">
@@ -331,7 +377,7 @@
                 {:else}
                   {p.name[0].toUpperCase()}
                 {/if}
-                {#if loser?.id === p.id}
+                {#if player2?.id === p.id}
                   <div class="ps-check">✓</div>
                 {/if}
               </div>
@@ -350,20 +396,20 @@
 
           {#if gameScores.length > 0}
             <div class="series-tally">
-              <span class="tally-name" class:tally-lead={seriesWins > seriesLosses}>{winner?.name ?? 'Winner'}</span>
-              <span class="tally-num" class:tally-lead={seriesWins > seriesLosses}>{seriesWins}</span>
+              <span class="tally-name" class:tally-lead={p1Wins > p2Wins}>{player1?.name ?? 'Player 1'}</span>
+              <span class="tally-num" class:tally-lead={p1Wins > p2Wins}>{p1Wins}</span>
               <span class="tally-sep">–</span>
-              <span class="tally-num" class:tally-lead={seriesLosses > seriesWins}>{seriesLosses}</span>
-              <span class="tally-name" class:tally-lead={seriesLosses > seriesWins}>{loser?.name ?? 'Loser'}</span>
+              <span class="tally-num" class:tally-lead={p2Wins > p1Wins}>{p2Wins}</span>
+              <span class="tally-name" class:tally-lead={p2Wins > p1Wins}>{player2?.name ?? 'Player 2'}</span>
             </div>
           {/if}
 
           {#each gameScores as game, i}
             <div class="game-row">
               <span class="game-label">G{i + 1}</span>
-              <span class="game-s" class:game-w={game.w > game.l}>{game.w}</span>
+              <span class="game-s" class:game-w={game.p1 > game.p2}>{game.p1}</span>
               <span class="game-sep">–</span>
-              <span class="game-s" class:game-w={game.l > game.w}>{game.l}</span>
+              <span class="game-s" class:game-w={game.p2 > game.p1}>{game.p2}</span>
               {#if i === gameScores.length - 1 && !seriesComplete}
                 <button class="game-undo" on:click={undoLastGame} type="button">✕</button>
               {/if}
@@ -373,9 +419,9 @@
           {#if !seriesComplete}
             <div class="game-row game-active">
               <span class="game-label">G{gameScores.length + 1}</span>
-              <input type="number" bind:value={curW} min="0" max="99" class="game-input" placeholder="–" />
+              <input type="number" bind:value={curP1} min="0" max="99" class="game-input" placeholder="–" />
               <span class="game-sep">–</span>
-              <input type="number" bind:value={curL} min="0" max="99" class="game-input" placeholder="–" />
+              <input type="number" bind:value={curP2} min="0" max="99" class="game-input" placeholder="–" />
               <button class="game-ok" on:click={confirmGame} disabled={!canConfirmGame} type="button">✓</button>
             </div>
           {:else}
@@ -389,13 +435,13 @@
           </div>
           <div class="score-row">
             <div class="score-field">
-              <label for="score-winner">{winner?.name ?? 'Winner'}</label>
-              <input id="score-winner" type="number" bind:value={winnerScore} min="0" max="99" class="tnum" />
+              <label for="score-p1">{player1?.name ?? 'Player 1'}</label>
+              <input id="score-p1" type="number" bind:value={p1Score} min="0" max="99" class="tnum" placeholder="–" />
             </div>
             <span class="score-dash">–</span>
             <div class="score-field">
-              <label for="score-loser">{loser?.name ?? 'Loser'}</label>
-              <input id="score-loser" type="number" bind:value={loserScore} min="0" max="99" class="tnum" />
+              <label for="score-p2">{player2?.name ?? 'Player 2'}</label>
+              <input id="score-p2" type="number" bind:value={p2Score} min="0" max="99" class="tnum" placeholder="–" />
             </div>
           </div>
         </section>
@@ -451,24 +497,24 @@
       </section>
 
       <!-- Elo preview -->
-      {#if preview && winner && loser}
+      {#if preview && actualWinner && actualLoser}
         <div class="preview">
           <div class="preview-row">
-            <span class="preview-name">{winner.name}</span>
-            <span class="preview-delta pos">+{winnerDelta}{bestOf > 1 ? '' : ' if wins'}</span>
+            <span class="preview-name">{actualWinner.name}</span>
+            <span class="preview-delta pos">+{winnerDelta}</span>
           </div>
           <div class="preview-row">
-            <span class="preview-name">{loser.name}</span>
-            <span class="preview-delta neg">{loserDelta}{bestOf > 1 ? '' : ' if loses'}</span>
+            <span class="preview-name">{actualLoser.name}</span>
+            <span class="preview-delta neg">{loserDelta}</span>
           </div>
           {#if winProb !== null}
             <div class="preview-prob">
               {#if winProb >= 60}
-                <span class="prob-label">{winner.name} is the favourite</span>
+                <span class="prob-label">{actualWinner.name} is the favourite</span>
                 <span class="prob-bar-wrap"><span class="prob-bar" style="width: {winProb}%"></span></span>
                 <span class="prob-pct tnum">{winProb}%</span>
               {:else if winProb <= 40}
-                <span class="prob-label">{loser.name} is the underdog — upset earns extra</span>
+                <span class="prob-label">{actualLoser.name} is the underdog — upset earns extra</span>
               {:else}
                 <span class="prob-label">Pretty even match</span>
               {/if}
@@ -479,7 +525,7 @@
 
       {#if logError}<p class="error">{logError}</p>{/if}
 
-      <button class="submit-btn" on:click={requestSubmit} disabled={submitting}>
+      <button class="submit-btn" on:click={requestSubmit} disabled={submitting || !actualWinner || !actualLoser}>
         {#if submitting}
           <span class="spinner"></span> Saving…
         {:else}
