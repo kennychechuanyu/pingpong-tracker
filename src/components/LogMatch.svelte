@@ -221,8 +221,17 @@
       // Compute coin rewards BEFORE logging the match (so "daily bonus" detection
       // still sees today as empty for this player if it is their first of the day).
       const now = new Date().toISOString()
-      const winnerReward = computeSingleMatchReward(actualWinner.id, true, now, $matchesStore)
-      const loserReward  = computeSingleMatchReward(actualLoser.id, false, now, $matchesStore)
+      const prospectiveMatch = {
+        winner_id: actualWinner.id,
+        loser_id: actualLoser.id,
+        winner_score: ws,
+        loser_score: ls,
+        game_scores: dbGameScores,
+        best_of: bestOf,
+        played_at: now,
+      }
+      const winnerReward = computeSingleMatchReward(actualWinner.id, prospectiveMatch, $matchesStore)
+      const loserReward  = computeSingleMatchReward(actualLoser.id, prospectiveMatch, $matchesStore)
 
       await logMatch(actualWinner.id, actualLoser.id, ws, ls, stakesValue, bestOf, dbGameScores)
       if (activeChallenge) {

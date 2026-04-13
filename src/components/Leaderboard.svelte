@@ -262,10 +262,10 @@
                   </span>
                 </div>
                 <div class="stats-row">
-                  <span class="coin-match-count tnum">{player.coinMatches}</span>
-                  <span class="coin-match-lbl">matches</span>
+                  <span class="coin-match-count tnum">{player.coinGamesPlayed}</span>
+                  <span class="coin-match-lbl">games</span>
                   <span class="stat-sep">·</span>
-                  <span class="coin-wins-count tnum">{player.coinWins}W</span>
+                  <span class="coin-wins-count tnum">{player.coinGamesWon}W</span>
                 </div>
               </div>
 

@@ -327,7 +327,7 @@
     {/if}
 
     <!-- Pong Coins -->
-    {#if coinStats && coinStats.matchCount > 0}
+    {#if coinStats && coinStats.gamesPlayed > 0}
       <div class="card coin-card">
         <div class="coin-sheen"></div>
         <div class="coin-header">
@@ -390,12 +390,12 @@
         <div class="coin-breakdown">
           <div class="coin-line">
             <span class="coin-line-dot"></span>
-            <span class="coin-line-label">Base <span class="coin-line-sub">· {COIN_RULES.BASE}/match × {coinStats.matchCount}</span></span>
+            <span class="coin-line-label">Base <span class="coin-line-sub">· {COIN_RULES.BASE}/game × {coinStats.gamesPlayed}</span></span>
             <span class="coin-line-val tnum">{formatCoins(coinStats.breakdown.base)}</span>
           </div>
           <div class="coin-line">
             <span class="coin-line-dot dot-win"></span>
-            <span class="coin-line-label">Win bonus <span class="coin-line-sub">· +{COIN_RULES.WIN_BONUS} × {coinStats.wins}</span></span>
+            <span class="coin-line-label">Win bonus <span class="coin-line-sub">· +{COIN_RULES.WIN_BONUS}/game × {coinStats.gamesWon}</span></span>
             <span class="coin-line-val tnum">{formatCoins(coinStats.breakdown.winBonus)}</span>
           </div>
           <div class="coin-line">

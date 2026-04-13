@@ -145,25 +145,30 @@
 
         <section>
           <h3>Pong Coins (PC)</h3>
-          <p>A separate reward currency — you earn it by <strong>showing up</strong>, not just winning. Elo is how good you are; Pong Coins are how much you play.</p>
+          <p>A separate reward currency — earned by <strong>showing up</strong>, not just winning. Elo is how good you are; Pong Coins are how much you play. Rewards are per <strong>individual game</strong>, so a Bo7 that goes the distance pays more than a single 11-point game.</p>
           <div class="coin-rules">
             <div class="coin-rule-row">
               <span class="coin-rule-dot"></span>
               <span class="coin-rule-label">Base reward</span>
-              <span class="coin-rule-val">+100 PC / match</span>
+              <span class="coin-rule-val">+100 PC / game</span>
             </div>
             <div class="coin-rule-row">
               <span class="coin-rule-dot win"></span>
               <span class="coin-rule-label">Win bonus</span>
-              <span class="coin-rule-val">+50 PC</span>
+              <span class="coin-rule-val">+50 PC / game won</span>
             </div>
             <div class="coin-rule-row">
               <span class="coin-rule-dot daily"></span>
               <span class="coin-rule-label">Daily first match</span>
-              <span class="coin-rule-val">+100 PC</span>
+              <span class="coin-rule-val">+100 PC / day</span>
             </div>
           </div>
-          <p class="coin-note">Losing still earns you the base + daily bonus. Keep stacking coins and climb the wealth ladder: <strong>Pauper</strong> 貧民 → <strong>Hustler</strong> 小販 → <strong>Merchant</strong> 商人 → <strong>Tycoon</strong> 富豪 → <strong>Mogul</strong> 大亨.</p>
+          <div class="coin-examples">
+            <div class="coin-ex-row"><span class="coin-ex-label">Single game win</span><span class="coin-ex-val">150 PC</span></div>
+            <div class="coin-ex-row"><span class="coin-ex-label">Bo7 4–3 win (7 games)</span><span class="coin-ex-val">900 PC</span></div>
+            <div class="coin-ex-row"><span class="coin-ex-label">Bo7 4–3 loss</span><span class="coin-ex-val">850 PC</span></div>
+          </div>
+          <p class="coin-note">Losing still earns the base + daily bonus. Stack coins and climb the wealth ladder: <strong>Pauper</strong> 貧民 → <strong>Hustler</strong> 小販 → <strong>Merchant</strong> 商人 → <strong>Tycoon</strong> 富豪 → <strong>Mogul</strong> 大亨.</p>
         </section>
 
         <div class="divider"></div>
@@ -528,6 +533,32 @@
     color: #555;
     line-height: 1.55;
     margin-top: 10px;
+  }
+
+  .coin-examples {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px dashed rgba(245,193,74,0.2);
+    border-radius: 8px;
+  }
+
+  .coin-ex-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 11px;
+  }
+
+  .coin-ex-label {
+    color: #777;
+  }
+
+  .coin-ex-val {
+    font-weight: 800;
+    color: #f5c14a;
+    font-variant-numeric: tabular-nums;
   }
 
   /* K-factor */
