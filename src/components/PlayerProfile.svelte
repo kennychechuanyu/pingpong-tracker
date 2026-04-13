@@ -117,18 +117,31 @@
   }
 
   function upsetStats(pid, sortedList, lookup) {
-    let upsetsWon = 0, upsetsLost = 0
     const me = lookup[pid]
-    if (!me) return { upsetsWon, upsetsLost }
+    if (!me) return { won: [], lost: [] }
+    // Group by opponent so we collapse multiple upset matches vs the same player
+    const wonByOpp = {}
+    const lostByOpp = {}
+    const myElo = me.elo ?? 0
     for (const m of sortedList) {
       if (m.winner_id !== pid && m.loser_id !== pid) continue
       const oppId = m.winner_id === pid ? m.loser_id : m.winner_id
       const opp = lookup[oppId]
       if (!opp) continue
-      if (m.winner_id === pid && (opp.elo ?? 0) > (me.elo ?? 0)) upsetsWon++
-      if (m.loser_id === pid && (opp.elo ?? 0) < (me.elo ?? 0)) upsetsLost++
+      const oppElo = opp.elo ?? 0
+      if (m.winner_id === pid && oppElo > myElo) {
+        if (!wonByOpp[oppId]) wonByOpp[oppId] = { opp, count: 0, eloDiff: oppElo - myElo }
+        wonByOpp[oppId].count++
+      } else if (m.loser_id === pid && oppElo < myElo) {
+        if (!lostByOpp[oppId]) lostByOpp[oppId] = { opp, count: 0, eloDiff: myElo - oppElo }
+        lostByOpp[oppId].count++
+      }
     }
-    return { upsetsWon, upsetsLost }
+    const won = Object.values(wonByOpp).sort((a, b) => b.eloDiff - a.eloDiff)
+    const lost = Object.values(lostByOpp).sort((a, b) => b.eloDiff - a.eloDiff)
+    const wonTotal = won.reduce((s, w) => s + w.count, 0)
+    const lostTotal = lost.reduce((s, l) => s + l.count, 0)
+    return { won, lost, wonTotal, lostTotal }
   }
 
   function recentForm(pid, sortedList, n) {
@@ -177,7 +190,7 @@
   $: margins = player ? winMargins(player.id, sorted) : { dominant: 0, comfortable: 0, close: 0 }
   $: marginTotal = margins.dominant + margins.comfortable + margins.close
   $: marginMax = Math.max(margins.dominant, margins.comfortable, margins.close, 1)
-  $: upsets = player ? upsetStats(player.id, sorted, byId) : { upsetsWon: 0, upsetsLost: 0 }
+  $: upsets = player ? upsetStats(player.id, sorted, byId) : { won: [], lost: [], wonTotal: 0, lostTotal: 0 }
   $: form10 = player ? recentForm(player.id, sorted, 10) : []
   $: formWins = form10.filter(r => r === 'W').length
   $: formLosses = form10.filter(r => r === 'L').length
@@ -370,7 +383,10 @@
         <div class="margin-list">
           <div class="margin-row">
             <div class="margin-top">
-              <span class="margin-label">Dominant</span>
+              <div class="margin-label-wrap">
+                <span class="margin-label margin-label-dom">Dominant</span>
+                <span class="margin-hint">11-0 to 11-2 · or a sweep</span>
+              </div>
               <span class="margin-count tnum">{margins.dominant}</span>
             </div>
             <div class="margin-bar-track">
@@ -379,7 +395,10 @@
           </div>
           <div class="margin-row">
             <div class="margin-top">
-              <span class="margin-label">Comfortable</span>
+              <div class="margin-label-wrap">
+                <span class="margin-label margin-label-com">Comfortable</span>
+                <span class="margin-hint">11-3 to 11-6 · or 1 game dropped</span>
+              </div>
               <span class="margin-count tnum">{margins.comfortable}</span>
             </div>
             <div class="margin-bar-track">
@@ -388,7 +407,10 @@
           </div>
           <div class="margin-row">
             <div class="margin-top">
-              <span class="margin-label">Grind</span>
+              <div class="margin-label-wrap">
+                <span class="margin-label margin-label-grind">Grind</span>
+                <span class="margin-hint">11-7 to 11-10 · or 2+ games dropped</span>
+              </div>
               <span class="margin-count tnum">{margins.close}</span>
             </div>
             <div class="margin-bar-track">
@@ -402,19 +424,66 @@
     {#if total > 0}
       <div class="card">
         <div class="card-label">Upset tracker</div>
-        <div class="upset-row">
-          <div class="upset-tile upset-won">
-            <span class="upset-num tnum">{upsets.upsetsWon}</span>
-            <span class="upset-lbl">Giant-slayer wins</span>
-            <span class="upset-desc">beat higher-rated opponents</span>
+
+        <!-- Giant-slayer wins -->
+        <div class="upset-block upset-won">
+          <div class="upset-head">
+            <span class="upset-num tnum">{upsets.wonTotal}</span>
+            <div class="upset-meta">
+              <span class="upset-lbl">Giant-slayer wins</span>
+              <span class="upset-desc">beat higher-rated opponents</span>
+            </div>
           </div>
-          <div class="upset-tile upset-lost">
-            <span class="upset-num tnum">{upsets.upsetsLost}</span>
-            <span class="upset-lbl">Upset losses</span>
-            <span class="upset-desc">lost to lower-rated opponents</span>
-          </div>
+          {#if upsets.won.length > 0}
+            <div class="upset-list">
+              {#each upsets.won.slice(0, 5) as u}
+                <button class="upset-item" on:click={() => push(`/player/${u.opp.id}`)}>
+                  <div class="upset-av">
+                    {#if u.opp.avatar_url}
+                      <img src={u.opp.avatar_url} alt={u.opp.name} />
+                    {:else}
+                      {u.opp.name[0].toUpperCase()}
+                    {/if}
+                  </div>
+                  <span class="upset-opp-name">{u.opp.name}</span>
+                  {#if u.count > 1}<span class="upset-count">×{u.count}</span>{/if}
+                  <span class="upset-gap upset-gap-pos">+{u.eloDiff}</span>
+                </button>
+              {/each}
+            </div>
+          {/if}
         </div>
-        <div class="upset-foot">based on current ratings</div>
+
+        <!-- Upset losses -->
+        <div class="upset-block upset-lost">
+          <div class="upset-head">
+            <span class="upset-num tnum">{upsets.lostTotal}</span>
+            <div class="upset-meta">
+              <span class="upset-lbl">Upset losses</span>
+              <span class="upset-desc">lost to lower-rated opponents</span>
+            </div>
+          </div>
+          {#if upsets.lost.length > 0}
+            <div class="upset-list">
+              {#each upsets.lost.slice(0, 5) as u}
+                <button class="upset-item" on:click={() => push(`/player/${u.opp.id}`)}>
+                  <div class="upset-av">
+                    {#if u.opp.avatar_url}
+                      <img src={u.opp.avatar_url} alt={u.opp.name} />
+                    {:else}
+                      {u.opp.name[0].toUpperCase()}
+                    {/if}
+                  </div>
+                  <span class="upset-opp-name">{u.opp.name}</span>
+                  {#if u.count > 1}<span class="upset-count">×{u.count}</span>{/if}
+                  <span class="upset-gap upset-gap-neg">−{u.eloDiff}</span>
+                </button>
+              {/each}
+            </div>
+          {/if}
+        </div>
+
+        <div class="upset-foot">Elo gap based on current ratings</div>
       </div>
     {/if}
 
@@ -988,26 +1057,48 @@
   }
 
   /* WIN MARGINS */
-  .margin-list { display: flex; flex-direction: column; gap: 12px; }
+  .margin-list { display: flex; flex-direction: column; gap: 14px; }
 
-  .margin-row { display: flex; flex-direction: column; gap: 5px; }
+  .margin-row { display: flex; flex-direction: column; gap: 6px; }
 
   .margin-top {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 10px;
+  }
+
+  .margin-label-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
   }
 
   .margin-label {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: -0.005em;
+  }
+
+  .margin-label-dom   { color: var(--amber); }
+  .margin-label-com   { color: #d4a04a; }
+  .margin-label-grind { color: var(--text); }
+
+  .margin-hint {
+    font-size: 10px;
+    color: var(--text-muted);
+    line-height: 1.3;
+    opacity: 0.75;
   }
 
   .margin-count {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text-muted);
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    padding-top: 2px;
   }
 
   .margin-bar-track {
@@ -1020,59 +1111,140 @@
   .margin-bar-fill {
     height: 100%;
     border-radius: 4px;
+    transition: width 0.3s ease;
   }
-  .margin-dominant { background: var(--amber); }
+  .margin-dominant { background: var(--amber); box-shadow: 0 0 8px rgba(245,158,11,0.3); }
   .margin-comfortable { background: rgba(245,158,11,0.55); }
   .margin-close { background: rgba(255,255,255,0.22); }
 
   /* UPSETS */
-  .upset-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .upset-tile {
-    padding: 12px;
-    border-radius: 10px;
+  .upset-block {
+    padding: 12px 14px;
+    border-radius: 12px;
     border: 1px solid var(--border);
     background: rgba(255,255,255,0.02);
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
+    margin-bottom: 10px;
   }
-  .upset-won { border-color: rgba(34,197,94,0.28); background: rgba(34,197,94,0.05); }
-  .upset-lost { border-color: rgba(239,68,68,0.28); background: rgba(239,68,68,0.05); }
+  .upset-block:last-of-type { margin-bottom: 0; }
+  .upset-won  { border-color: rgba(34,197,94,0.28); background: rgba(34,197,94,0.04); }
+  .upset-lost { border-color: rgba(239,68,68,0.28); background: rgba(239,68,68,0.04); }
+
+  .upset-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
 
   .upset-num {
-    font-size: 26px;
+    font-size: 30px;
     font-weight: 800;
     letter-spacing: -0.5px;
-    color: var(--text);
     line-height: 1;
+    min-width: 34px;
   }
   .upset-won .upset-num { color: var(--green); }
   .upset-lost .upset-num { color: var(--red); }
 
+  .upset-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
   .upset-lbl {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--text);
-    margin-top: 3px;
   }
 
   .upset-desc {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-muted);
     line-height: 1.3;
   }
+
+  .upset-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    margin-top: 4px;
+  }
+
+  .upset-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    text-align: left;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.12s;
+  }
+  .upset-item:hover { background: rgba(255,255,255,0.04); }
+  .upset-item:active { background: rgba(255,255,255,0.06); }
+
+  .upset-av {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .upset-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .upset-opp-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .upset-count {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.06);
+    padding: 2px 6px;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+
+  .upset-gap {
+    font-size: 11px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    padding: 3px 8px;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+  .upset-gap-pos { color: var(--green); background: rgba(34,197,94,0.1); }
+  .upset-gap-neg { color: var(--red); background: rgba(239,68,68,0.1); }
 
   .upset-foot {
     margin-top: 10px;
     font-size: 10px;
     color: var(--text-muted);
     text-align: center;
-    opacity: 0.6;
+    opacity: 0.55;
     font-style: italic;
   }
 
