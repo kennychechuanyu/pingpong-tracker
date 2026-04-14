@@ -83,8 +83,11 @@
 
   function requestSave() {
     if (!canSubmit) return
-    if (player.pin_hash) { pinPromptAction = 'save'; pinPromptOpen = true }
-    else save()
+    if (player.pin_hash || $adminPlayers.some(a => a.id !== player?.id)) {
+      openPinPrompt('save')
+    } else {
+      save()
+    }
   }
 
   async function doDelete() {
@@ -104,35 +107,87 @@
 
   function requestDelete() {
     if (!confirmDelete) { confirmDelete = true; return }
-    if (player.pin_hash) { pinPromptAction = 'delete'; pinPromptOpen = true }
-    else doDelete()
+    if (player.pin_hash || $adminPlayers.some(a => a.id !== player?.id)) {
+      openPinPrompt('delete')
+    } else {
+      doDelete()
+    }
+  }
+
+  // Who's allowed to verify a given action via PinPrompt.
+  // Different actions have different rules to prevent hijacking.
+  let pinPromptPlayers = []
+
+  function playersAllowedFor(action) {
+    const admins = $adminPlayers.filter(a => a.id !== player?.id)
+    if (action === 'setPin') {
+      // Changing an existing PIN: only the player themselves
+      if (player?.pin_hash) return [player]
+      // First-time PIN setup: only admins (prevents account hijacking)
+      return admins
+    }
+    if (action === 'removePin') {
+      // Removing a PIN: only the player themselves
+      return player?.pin_hash ? [player] : []
+    }
+    // save / delete: player or any admin
+    const result = []
+    if (player?.pin_hash) result.push(player)
+    return [...result, ...admins]
+  }
+
+  function openPinPrompt(action) {
+    pinPromptPlayers = playersAllowedFor(action)
+    if (pinPromptPlayers.length === 0) {
+      pinError = action === 'setPin'
+        ? 'No admin available to authorize first-time PIN setup.'
+        : 'No one authorized to do this.'
+      return false
+    }
+    pinPromptAction = action
+    pinPromptOpen = true
+    return true
   }
 
   function onPinSuccess(e) {
+    const verifiedPlayer = e?.detail?.player ?? null
     const verifiedPin = e?.detail?.pin ?? null
     const action = pinPromptAction
     pinPromptAction = null
+
+    const isSelf = verifiedPlayer && player && verifiedPlayer.id === player.id
+
     if (action === 'save') save()
     else if (action === 'delete') doDelete()
-    else if (action === 'setPin') doSetPin(verifiedPin)
-    else if (action === 'removePin') doRemovePin(verifiedPin)
+    else if (action === 'setPin') {
+      // Self: plaintext goes in as currentPin. Admin: plaintext goes in as adminPin.
+      if (isSelf) doSetPin(verifiedPin, null)
+      else doSetPin(null, verifiedPin)
+    }
+    else if (action === 'removePin') {
+      // Only self is allowed to remove their own PIN (playersAllowedFor enforces this)
+      doRemovePin(verifiedPin)
+    }
   }
 
   function setPin() {
     if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) { pinError = 'PIN must be 4 digits.'; return }
-    // Changing an existing PIN requires verifying the current one first
-    if (player?.pin_hash) {
-      pinPromptAction = 'setPin'
-      pinPromptOpen = true
+    pinError = ''
+
+    // Bootstrap: no PIN on player AND no admin with PIN → allow direct setup
+    const hasAnyAdmin = $adminPlayers.some(a => a.id !== player?.id && a.pin_hash)
+    if (!player?.pin_hash && !hasAnyAdmin) {
+      doSetPin(null, null)
       return
     }
-    doSetPin(null)
+
+    openPinPrompt('setPin')
   }
 
-  async function doSetPin(currentPin) {
+  async function doSetPin(currentPin, adminPin) {
     pinSaving = true; pinError = ''
     try {
-      await setPlayerPin(player.id, newPin, currentPin)
+      await setPlayerPin(player.id, newPin, currentPin, adminPin)
       newPin = ''
     } catch (e) {
       pinError = e.message || 'Failed to set PIN.'
@@ -140,22 +195,21 @@
   }
 
   function removePin() {
-    if (player?.pin_hash) {
-      pinPromptAction = 'removePin'
-      pinPromptOpen = true
-      return
-    }
-    // Nothing to remove
+    if (!player?.pin_hash) return
+    pinError = ''
+    openPinPrompt('removePin')
   }
 
   async function doRemovePin(currentPin) {
     pinSaving = true; pinError = ''
     try {
-      await setPlayerPin(player.id, null, currentPin)
+      await setPlayerPin(player.id, null, currentPin, null)
     } catch (e) {
       pinError = e.message || 'Failed to remove PIN.'
     } finally { pinSaving = false }
   }
+
+  // save/delete also use openPinPrompt so pinPromptPlayers is set correctly
 
   function handleKey(e) { if (e.key === 'Escape') close() }
   onMount(() => window.addEventListener('keydown', handleKey))
@@ -385,9 +439,21 @@
 
 <PinPrompt
   bind:open={pinPromptOpen}
-  players={[player, ...$adminPlayers.filter(a => a.id !== player?.id)]}
-  title={pinPromptAction === 'delete' ? 'Confirm Delete' : 'Confirm Changes'}
-  subtitle={pinPromptAction === 'delete' ? 'Enter your PIN to delete this profile' : 'Enter your PIN to save changes'}
+  players={pinPromptPlayers}
+  title={
+    pinPromptAction === 'delete' ? 'Confirm Delete'
+    : pinPromptAction === 'setPin' && !player?.pin_hash ? 'Admin Authorization'
+    : pinPromptAction === 'setPin' ? 'Change PIN'
+    : pinPromptAction === 'removePin' ? 'Remove PIN'
+    : 'Confirm Changes'
+  }
+  subtitle={
+    pinPromptAction === 'delete' ? 'Enter PIN to delete this profile'
+    : pinPromptAction === 'setPin' && !player?.pin_hash ? 'Admin PIN required for first-time setup'
+    : pinPromptAction === 'setPin' ? 'Enter your current PIN to change it'
+    : pinPromptAction === 'removePin' ? 'Enter your PIN to remove it'
+    : 'Enter PIN to save changes'
+  }
   on:success={onPinSuccess}
 />
 

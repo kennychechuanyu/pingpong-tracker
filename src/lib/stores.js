@@ -237,13 +237,19 @@ export async function updatePlayer(id, { name, paddle_type, philosophy, avatarFi
 }
 
 // Set, change, or clear a player's PIN via the server-side function.
-// newPin / currentPin are plaintext 4-digit strings (or null).
-// The server verifies the current PIN against the stored hash before updating.
-export async function setPlayerPin(id, newPin, currentPin) {
+// newPin / currentPin / adminPin are plaintext 4-digit strings (or null).
+//
+// Rules enforced by the server (set_player_pin):
+//   - If target player already has a PIN, currentPin must match it.
+//   - If target player has no PIN and admins with PINs exist, adminPin must
+//     match an admin's PIN (prevents "claiming" unprotected accounts).
+//   - Otherwise (bootstrap, no admins yet) the change is allowed.
+export async function setPlayerPin(id, newPin, currentPin, adminPin = null) {
   const { error } = await supabase.rpc('set_player_pin', {
     p_id: id,
     p_new_pin: newPin || null,
     p_current_pin: currentPin || null,
+    p_admin_pin: adminPin || null,
   })
   if (error) throw new Error(error.message || JSON.stringify(error))
   // Keep the local store in sync so the UI updates immediately
