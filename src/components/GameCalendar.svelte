@@ -60,7 +60,7 @@
   }
 
   function onPinSuccess(e) {
-    const verifiedPlayer = e.detail
+    const verifiedPlayer = e.detail.player
     sessionPlayer.set(verifiedPlayer)
     doCastVote(verifiedPlayer)
   }
@@ -120,7 +120,7 @@
   }
 
   function onTrashPinSuccess(e) {
-    sessionPlayer.set(e.detail)
+    sessionPlayer.set(e.detail.player)
     // trashEditId/Field already set — UI will show the input
   }
 

@@ -27,7 +27,7 @@
     checking = true
     const ok = await verifyPin(selectedPlayer, digits)
     if (ok) {
-      dispatch('success', selectedPlayer)
+      dispatch('success', { player: selectedPlayer, pin: digits })
       open = false
     } else {
       wrong = true

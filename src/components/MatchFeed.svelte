@@ -31,7 +31,7 @@
   }
 
   function onReactPinSuccess(e) {
-    const p = e.detail
+    const p = e.detail.player
     sessionPlayer.set(p)
     if (reactTarget) doReact(p, reactTarget.matchId, reactTarget.emoji)
   }

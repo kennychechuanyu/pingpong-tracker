@@ -1,7 +1,6 @@
 <script>
   import { onMount, onDestroy } from 'svelte'
   import { updatePlayer, deletePlayer, setPlayerPin, setPlayerTeam, adminPlayers, teams } from '../lib/stores.js'
-  import { hashPin } from '../lib/pin.js'
   import { push } from 'svelte-spa-router'
   import PinPrompt from './PinPrompt.svelte'
 
@@ -109,28 +108,50 @@
     else doDelete()
   }
 
-  function onPinSuccess() {
-    if (pinPromptAction === 'save') save()
-    else if (pinPromptAction === 'delete') doDelete()
+  function onPinSuccess(e) {
+    const verifiedPin = e?.detail?.pin ?? null
+    const action = pinPromptAction
     pinPromptAction = null
+    if (action === 'save') save()
+    else if (action === 'delete') doDelete()
+    else if (action === 'setPin') doSetPin(verifiedPin)
+    else if (action === 'removePin') doRemovePin(verifiedPin)
   }
 
-  async function setPin() {
+  function setPin() {
     if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) { pinError = 'PIN must be 4 digits.'; return }
+    // Changing an existing PIN requires verifying the current one first
+    if (player?.pin_hash) {
+      pinPromptAction = 'setPin'
+      pinPromptOpen = true
+      return
+    }
+    doSetPin(null)
+  }
+
+  async function doSetPin(currentPin) {
     pinSaving = true; pinError = ''
     try {
-      const hash = await hashPin(newPin)
-      await setPlayerPin(player.id, hash)
+      await setPlayerPin(player.id, newPin, currentPin)
       newPin = ''
     } catch (e) {
       pinError = e.message || 'Failed to set PIN.'
     } finally { pinSaving = false }
   }
 
-  async function removePin() {
+  function removePin() {
+    if (player?.pin_hash) {
+      pinPromptAction = 'removePin'
+      pinPromptOpen = true
+      return
+    }
+    // Nothing to remove
+  }
+
+  async function doRemovePin(currentPin) {
     pinSaving = true; pinError = ''
     try {
-      await setPlayerPin(player.id, null)
+      await setPlayerPin(player.id, null, currentPin)
     } catch (e) {
       pinError = e.message || 'Failed to remove PIN.'
     } finally { pinSaving = false }

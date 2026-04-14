@@ -1,6 +1,7 @@
 import { writable, derived } from 'svelte/store'
 import { supabase, SUPABASE_URL, SUPABASE_KEY } from './supabase.js'
 import { computeAll } from './elo.js'
+import { hashPin } from './pin.js'
 
 const SUPA_URL = SUPABASE_URL
 const SUPA_KEY = SUPABASE_KEY
@@ -235,10 +236,19 @@ export async function updatePlayer(id, { name, paddle_type, philosophy, avatarFi
   players.update(ps => ps.map(p => p.id === id ? { ...p, ...updates } : p))
 }
 
-export async function setPlayerPin(id, pinHash) {
-  const { error } = await supabase.from('players').update({ pin_hash: pinHash }).eq('id', id)
+// Set, change, or clear a player's PIN via the server-side function.
+// newPin / currentPin are plaintext 4-digit strings (or null).
+// The server verifies the current PIN against the stored hash before updating.
+export async function setPlayerPin(id, newPin, currentPin) {
+  const { error } = await supabase.rpc('set_player_pin', {
+    p_id: id,
+    p_new_pin: newPin || null,
+    p_current_pin: currentPin || null,
+  })
   if (error) throw new Error(error.message || JSON.stringify(error))
-  players.update(ps => ps.map(p => p.id === id ? { ...p, pin_hash: pinHash } : p))
+  // Keep the local store in sync so the UI updates immediately
+  const newHash = newPin ? await hashPin(newPin) : null
+  players.update(ps => ps.map(p => p.id === id ? { ...p, pin_hash: newHash } : p))
 }
 
 export async function castReaction(matchId, playerId, emoji) {
