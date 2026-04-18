@@ -200,7 +200,7 @@
   $: formLosses = form10.filter(r => r === 'L').length
 
   // Pong Coins
-  $: coinStats = player ? computePlayerCoins(player.id, allMatches) : null
+  $: coinStats = player ? computePlayerCoins(player.id, allMatches, player.name) : null
 
   function rankOrdinalClass(r) {
     if (r === 1) return 'rank-gold'

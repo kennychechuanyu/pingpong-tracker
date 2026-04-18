@@ -9,6 +9,14 @@ export const COIN_RULES = {
   DAILY_BONUS: 100,  // extra for your first match of the day
 }
 
+// Temporary coin overrides — keyed by player name, value is total coins.
+// Set to null or remove entry to use computed value.
+export const COIN_OVERRIDES = {
+  'John': 1000000,
+  'Lifen Win': 2000000,
+  '老刘儿': 1500000,
+}
+
 // Wealth tiers — rags-to-riches progression based on lifetime Pong Coins earned.
 // Thresholds are calibrated for per-game rewards (avg ~600 PC per match).
 export const COIN_TIERS = [
@@ -57,7 +65,7 @@ function getGamesCount(match, playerId) {
 
 // Compute coin stats for a single player from their match history.
 // Returns: { total, gamesPlayed, gamesWon, matchCount, breakdown, tier }
-export function computePlayerCoins(playerId, matches) {
+export function computePlayerCoins(playerId, matches, playerName) {
   if (!playerId || !Array.isArray(matches)) {
     return {
       total: 0,
@@ -73,7 +81,15 @@ export function computePlayerCoins(playerId, matches) {
     (a.played_at ?? '') < (b.played_at ?? '') ? -1 : (a.played_at ?? '') > (b.played_at ?? '') ? 1 : 0
   )
 
-  return computePlayerCoinsSorted(playerId, sorted)
+  const result = computePlayerCoinsSorted(playerId, sorted)
+
+  // Apply temporary override if one exists for this player
+  if (playerName && COIN_OVERRIDES[playerName] != null) {
+    result.total = COIN_OVERRIDES[playerName]
+    result.tier = getTier(result.total)
+  }
+
+  return result
 }
 
 // Internal helper: compute coins from a pre-sorted match list (no re-sorting).
@@ -205,13 +221,16 @@ export function computeCoinRankings(rankings, matches) {
 
   const withStats = rankings.map(p => {
     const stats = computePlayerCoinsSorted(p.id, sortedMatches)
+    // Apply temporary override if one exists for this player
+    const overrideTotal = (p.name && COIN_OVERRIDES[p.name] != null) ? COIN_OVERRIDES[p.name] : null
+    const total = overrideTotal != null ? overrideTotal : stats.total
     return {
       ...p,
-      coins: stats.total,
+      coins: total,
       coinGamesPlayed: stats.gamesPlayed,
       coinGamesWon: stats.gamesWon,
       coinMatchCount: stats.matchCount,
-      coinTier: stats.tier,
+      coinTier: getTier(total),
       coinBreakdown: stats.breakdown,
     }
   })
