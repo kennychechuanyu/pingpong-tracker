@@ -212,7 +212,19 @@
 </script>
 
 {#if player}
-  <div class="wrap">
+  <div class="wrap" class:wrap-kenny={isKenny}>
+    {#if isKenny}
+      <div class="kenny-sparkles">
+        <div class="sparkle s1"></div>
+        <div class="sparkle s2"></div>
+        <div class="sparkle s3"></div>
+        <div class="sparkle s4"></div>
+        <div class="sparkle s5"></div>
+        <div class="sparkle s6"></div>
+        <div class="sparkle s7"></div>
+        <div class="sparkle s8"></div>
+      </div>
+    {/if}
     <div class="topbar">
       <button class="back" on:click={() => push('/')}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
@@ -231,6 +243,9 @@
 
     <div class="hero" class:hero-kenny={isKenny}>
       <div class="hero-glow"></div>
+      {#if isKenny}
+        <div class="hero-shimmer"></div>
+      {/if}
       {#if isKenny}
         <div class="boba-float boba-1"></div>
         <div class="boba-float boba-2"></div>
@@ -269,7 +284,25 @@
         </div>
       {/if}
       <div class="hero-inner">
-        <div class="avatar-wrap">
+        <div class="avatar-wrap" class:avatar-wrap-kenny={isKenny}>
+          {#if isKenny}
+            <div class="avatar-crown">
+              <svg viewBox="0 0 40 28" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 22 L6 8 L12 14 L20 2 L28 14 L34 8 L38 22 Z" fill="url(#crownGold)" stroke="#7a4f00" stroke-width="1.2" stroke-linejoin="round"/>
+                <defs>
+                  <linearGradient id="crownGold" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#ffd700"/>
+                    <stop offset="50%" stop-color="#f5a623"/>
+                    <stop offset="100%" stop-color="#d4870e"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="6" cy="8" r="2.5" fill="#ffd700" stroke="#7a4f00" stroke-width="0.8"/>
+                <circle cx="20" cy="2" r="3" fill="#ffd700" stroke="#7a4f00" stroke-width="0.8"/>
+                <circle cx="34" cy="8" r="2.5" fill="#ffd700" stroke="#7a4f00" stroke-width="0.8"/>
+                <rect x="4" y="22" width="32" height="4" rx="1.5" fill="url(#crownGold)" stroke="#7a4f00" stroke-width="0.8"/>
+              </svg>
+            </div>
+          {/if}
           {#if player.avatar_url}
             <img src={player.avatar_url} alt={player.name} class="avatar-photo" />
           {:else}
@@ -294,6 +327,9 @@
               <span class="paddle-badge">{player.paddle_type}</span>
             {/if}
           </div>
+          {#if isKenny}
+            <div class="kenny-title">Founder & Table Master</div>
+          {/if}
           {#if player.philosophy}
             <p class="philosophy">"{player.philosophy}"</p>
           {/if}
@@ -1879,31 +1915,184 @@
     50% { background-position: 100% 50%; box-shadow: 0 0 12px rgba(245,158,11,0.6), 0 0 30px rgba(245,158,11,0.25), inset 0 1px 0 rgba(255,255,255,0.35); }
   }
 
-  /* ── KENNY BUBBLE TEA HERO ─────────────────────────── */
+  /* ── KENNY VIP PAGE ─────────────────────────── */
+
+  /* Wrap — page-level sparkle container */
+  .wrap-kenny {
+    position: relative;
+  }
+
+  .wrap-kenny :global(.card) {
+    border-color: rgba(200,160,100,0.2);
+    box-shadow: 0 0 12px rgba(180,130,60,0.06);
+  }
+
+  .wrap-kenny :global(.stat-tile) {
+    border-color: rgba(200,160,100,0.2);
+    box-shadow: 0 0 8px rgba(180,130,60,0.05);
+  }
+
+  /* Floating sparkles across the page */
+  .kenny-sparkles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+
+  .sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #f5c14a;
+    box-shadow: 0 0 6px 2px rgba(245,193,74,0.6);
+    animation: sparkleFloat linear infinite;
+    opacity: 0;
+  }
+
+  .s1 { left: 5%; top: 10%; animation-duration: 4s; animation-delay: 0s; }
+  .s2 { left: 90%; top: 25%; animation-duration: 5s; animation-delay: 0.8s; }
+  .s3 { left: 15%; top: 45%; animation-duration: 3.5s; animation-delay: 1.6s; }
+  .s4 { left: 80%; top: 60%; animation-duration: 4.5s; animation-delay: 2.4s; }
+  .s5 { left: 50%; top: 15%; animation-duration: 3.8s; animation-delay: 3.2s; }
+  .s6 { left: 30%; top: 70%; animation-duration: 5.2s; animation-delay: 0.4s; }
+  .s7 { left: 70%; top: 40%; animation-duration: 4.2s; animation-delay: 1.2s; }
+  .s8 { left: 45%; top: 85%; animation-duration: 3.6s; animation-delay: 2s; }
+
+  @keyframes sparkleFloat {
+    0%   { transform: scale(0) translateY(0); opacity: 0; }
+    15%  { transform: scale(1); opacity: 1; }
+    50%  { transform: scale(1.2) translateY(-8px); opacity: 0.8; }
+    85%  { transform: scale(0.8); opacity: 0.3; }
+    100% { transform: scale(0) translateY(-16px); opacity: 0; }
+  }
+
+  /* Hero section — premium gradient border + warm tea tones */
   .hero-kenny {
     background:
-      radial-gradient(140% 120% at 100% 0%, rgba(180,130,80,0.18) 0%, rgba(180,130,80,0) 55%),
-      radial-gradient(80% 100% at 0% 100%, rgba(120,80,50,0.1) 0%, transparent 60%),
-      linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-    border-color: rgba(200,160,120,0.25);
+      radial-gradient(140% 120% at 100% 0%, rgba(180,130,80,0.22) 0%, rgba(180,130,80,0) 55%),
+      radial-gradient(80% 100% at 0% 100%, rgba(140,100,60,0.14) 0%, transparent 60%),
+      linear-gradient(180deg, rgba(255,240,200,0.04), rgba(255,255,255,0.01));
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+  }
+
+  .hero-kenny::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #f5c14a, #d4870e, #f5c14a, #ffd700, #f5c14a);
+    background-size: 300% 300%;
+    animation: borderGlow 4s ease-in-out infinite;
+    z-index: -1;
+    opacity: 0.7;
+  }
+
+  @keyframes borderGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
   }
 
   .hero-kenny .hero-glow {
-    background: radial-gradient(closest-side, rgba(200,160,120,0.2), transparent 70%);
+    background: radial-gradient(closest-side, rgba(220,170,100,0.25), transparent 70%);
   }
 
-  .hero-kenny .avatar-wrap {
-    border-color: rgba(245,193,74,0.5);
+  /* Shimmer sweep across hero */
+  .hero-shimmer {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,230,150,0.1), rgba(255,255,255,0.15), rgba(255,230,150,0.1), transparent);
+    animation: shimmerSweep 5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  @keyframes shimmerSweep {
+    0%, 100% { left: -100%; }
+    50% { left: 150%; }
+  }
+
+  /* Crown above avatar */
+  .avatar-crown {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 44px;
+    height: 30px;
+    z-index: 3;
+    filter: drop-shadow(0 2px 6px rgba(245,158,11,0.5));
+    animation: crownBob 3s ease-in-out infinite;
+  }
+  .avatar-crown svg { width: 100%; height: 100%; display: block; }
+
+  @keyframes crownBob {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-3px); }
+  }
+
+  /* Avatar — golden ring glow */
+  .avatar-wrap-kenny {
+    border-color: rgba(245,193,74,0.6) !important;
     box-shadow:
-      0 0 0 4px rgba(245,193,74,0.12),
-      0 0 16px rgba(245,158,11,0.3),
-      0 4px 16px rgba(0,0,0,0.4);
+      0 0 0 4px rgba(245,193,74,0.15),
+      0 0 20px rgba(245,158,11,0.35),
+      0 0 40px rgba(245,158,11,0.15),
+      0 4px 16px rgba(0,0,0,0.4) !important;
     animation: adminAvatarGlow 4s ease-in-out infinite;
   }
 
   @keyframes adminAvatarGlow {
-    0%, 100% { box-shadow: 0 0 0 4px rgba(245,193,74,0.12), 0 0 16px rgba(245,158,11,0.25), 0 4px 16px rgba(0,0,0,0.4); }
-    50% { box-shadow: 0 0 0 5px rgba(245,193,74,0.18), 0 0 24px rgba(245,158,11,0.4), 0 4px 16px rgba(0,0,0,0.4); }
+    0%, 100% {
+      box-shadow:
+        0 0 0 4px rgba(245,193,74,0.15),
+        0 0 20px rgba(245,158,11,0.3),
+        0 0 40px rgba(245,158,11,0.12),
+        0 4px 16px rgba(0,0,0,0.4);
+    }
+    50% {
+      box-shadow:
+        0 0 0 6px rgba(245,193,74,0.22),
+        0 0 28px rgba(245,158,11,0.5),
+        0 0 50px rgba(245,158,11,0.2),
+        0 4px 16px rgba(0,0,0,0.4);
+    }
+  }
+
+  /* Kenny title */
+  .kenny-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #d4870e, #f5c14a, #ffd700, #f5c14a, #d4870e);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: titleShine 3s ease-in-out infinite;
+    margin-bottom: 6px;
+  }
+
+  @keyframes titleShine {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Kenny Elo — warm gold gradient */
+  .hero-kenny .elo {
+    background: linear-gradient(180deg, #ffd700 0%, #f5c14a 40%, #d4870e 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    filter: drop-shadow(0 0 8px rgba(245,193,74,0.3));
   }
 
   /* Floating boba pearls */
@@ -1915,6 +2104,7 @@
     pointer-events: none;
     animation: bobaRise linear infinite;
     opacity: 0;
+    z-index: 1;
   }
 
   .boba-1 { width: 14px; height: 14px; left: 6%; bottom: 15%; animation-duration: 7s; animation-delay: 0s; }
@@ -1941,6 +2131,7 @@
     height: 76px;
     opacity: 0.7;
     pointer-events: none;
+    z-index: 1;
   }
   .boba-cup svg { width: 100%; height: 100%; display: block; }
 </style>
