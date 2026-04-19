@@ -11,11 +11,7 @@ export const COIN_RULES = {
 
 // Temporary coin overrides — keyed by player name, value is total coins.
 // Set to null or remove entry to use computed value.
-export const COIN_OVERRIDES = {
-  'John': -1000000,
-  'Lifen Win': 2000000,
-  '老刘儿': -1000000,
-}
+export const COIN_OVERRIDES = {}
 
 // Wealth tiers — rags-to-riches progression based on lifetime Pong Coins earned.
 // Thresholds are calibrated for per-game rewards (avg ~600 PC per match).
@@ -205,7 +201,7 @@ export function getTier(coins) {
 
 // Format a coin amount with thousands separator.
 export function formatCoins(n) {
-  const num = Math.floor(n ?? 0)
+  const num = Math.max(0, Math.floor(n ?? 0))
   return num.toLocaleString('en-US')
 }
 
