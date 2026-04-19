@@ -187,6 +187,7 @@
   $: rankDisplay = rank >= 0 ? rank + 1 : null
 
   $: achievements = player ? getAchievements(player, rank) : []
+  $: isKenny = player?.name === 'Kenny' && player?.is_admin
 
   $: daysActive = player ? uniqueDays(player.id, sorted) : 0
   $: formats = player ? formatBreakdown(player.id, sorted) : []
@@ -228,8 +229,28 @@
       </button>
     </div>
 
-    <div class="hero">
+    <div class="hero" class:hero-kenny={isKenny}>
       <div class="hero-glow"></div>
+      {#if isKenny}
+        <div class="boba-float boba-1"></div>
+        <div class="boba-float boba-2"></div>
+        <div class="boba-float boba-3"></div>
+        <div class="boba-float boba-4"></div>
+        <div class="boba-float boba-5"></div>
+        <div class="boba-float boba-6"></div>
+        <div class="boba-cup">
+          <svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
+            <rect x="12" y="18" width="36" height="52" rx="4" fill="rgba(200,160,120,0.15)" stroke="rgba(200,160,120,0.3)" stroke-width="1.5"/>
+            <rect x="18" y="10" width="24" height="12" rx="6" fill="none" stroke="rgba(200,160,120,0.25)" stroke-width="1.5"/>
+            <line x1="30" y1="4" x2="30" y2="10" stroke="rgba(200,160,120,0.3)" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="22" cy="55" r="4" fill="rgba(60,30,15,0.4)"/>
+            <circle cx="32" cy="58" r="3.5" fill="rgba(60,30,15,0.35)"/>
+            <circle cx="26" cy="48" r="3" fill="rgba(60,30,15,0.3)"/>
+            <circle cx="36" cy="50" r="3.5" fill="rgba(60,30,15,0.35)"/>
+            <circle cx="20" cy="62" r="3" fill="rgba(60,30,15,0.3)"/>
+          </svg>
+        </div>
+      {/if}
       <div class="hero-inner">
         <div class="avatar-wrap">
           {#if player.avatar_url}
@@ -244,6 +265,14 @@
         <div class="header-info">
           <div class="name-line">
             <h1>{player.name}</h1>
+            {#if player.is_admin}
+              <span class="admin-badge">
+                <svg viewBox="0 0 20 20" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 1L12.5 6L18 7L14 11.5L15 17L10 14.5L5 17L6 11.5L2 7L7.5 6L10 1Z" fill="currentColor" stroke="currentColor" stroke-width="0.5"/>
+                </svg>
+                ADMIN
+              </span>
+            {/if}
             {#if player.paddle_type}
               <span class="paddle-badge">{player.paddle_type}</span>
             {/if}
@@ -1800,4 +1829,102 @@
   .rival-zh { color: var(--red) !important; }
   .rival-avatar { border-color: rgba(239,68,68,0.35) !important; }
   .rival-name { color: var(--red) !important; }
+
+  /* ── ADMIN BADGE ─────────────────────────── */
+  .admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    padding: 3px 8px 3px 6px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #f59e0b, #fbbf24, #f59e0b);
+    background-size: 200% 200%;
+    color: #1a1000;
+    border: 1px solid rgba(251,191,36,0.6);
+    box-shadow:
+      0 0 8px rgba(245,158,11,0.4),
+      0 0 20px rgba(245,158,11,0.15),
+      inset 0 1px 0 rgba(255,255,255,0.35);
+    animation: adminShimmer 3s ease-in-out infinite;
+    flex-shrink: 0;
+    line-height: 1;
+    text-shadow: 0 0.5px 0 rgba(255,255,255,0.3);
+  }
+  .admin-badge svg {
+    filter: drop-shadow(0 0 2px rgba(245,158,11,0.5));
+  }
+
+  @keyframes adminShimmer {
+    0%, 100% { background-position: 0% 50%; box-shadow: 0 0 8px rgba(245,158,11,0.4), 0 0 20px rgba(245,158,11,0.15), inset 0 1px 0 rgba(255,255,255,0.35); }
+    50% { background-position: 100% 50%; box-shadow: 0 0 12px rgba(245,158,11,0.6), 0 0 30px rgba(245,158,11,0.25), inset 0 1px 0 rgba(255,255,255,0.35); }
+  }
+
+  /* ── KENNY BUBBLE TEA HERO ─────────────────────────── */
+  .hero-kenny {
+    background:
+      radial-gradient(140% 120% at 100% 0%, rgba(180,130,80,0.18) 0%, rgba(180,130,80,0) 55%),
+      radial-gradient(80% 100% at 0% 100%, rgba(120,80,50,0.1) 0%, transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    border-color: rgba(200,160,120,0.25);
+  }
+
+  .hero-kenny .hero-glow {
+    background: radial-gradient(closest-side, rgba(200,160,120,0.2), transparent 70%);
+  }
+
+  .hero-kenny .avatar-wrap {
+    border-color: rgba(245,193,74,0.5);
+    box-shadow:
+      0 0 0 4px rgba(245,193,74,0.12),
+      0 0 16px rgba(245,158,11,0.3),
+      0 4px 16px rgba(0,0,0,0.4);
+    animation: adminAvatarGlow 4s ease-in-out infinite;
+  }
+
+  @keyframes adminAvatarGlow {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(245,193,74,0.12), 0 0 16px rgba(245,158,11,0.25), 0 4px 16px rgba(0,0,0,0.4); }
+    50% { box-shadow: 0 0 0 5px rgba(245,193,74,0.18), 0 0 24px rgba(245,158,11,0.4), 0 4px 16px rgba(0,0,0,0.4); }
+  }
+
+  /* Floating boba pearls */
+  .boba-float {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, rgba(100,60,30,0.5), rgba(50,25,10,0.6));
+    box-shadow: inset -1px -1px 2px rgba(0,0,0,0.3), 0 0 4px rgba(100,60,30,0.15);
+    pointer-events: none;
+    animation: bobaRise linear infinite;
+    opacity: 0;
+  }
+
+  .boba-1 { width: 10px; height: 10px; left: 8%; bottom: 15%; animation-duration: 7s; animation-delay: 0s; }
+  .boba-2 { width: 8px; height: 8px; left: 75%; bottom: 10%; animation-duration: 9s; animation-delay: 1.5s; }
+  .boba-3 { width: 12px; height: 12px; left: 55%; bottom: 20%; animation-duration: 8s; animation-delay: 3s; }
+  .boba-4 { width: 7px; height: 7px; left: 25%; bottom: 5%; animation-duration: 10s; animation-delay: 4.5s; }
+  .boba-5 { width: 9px; height: 9px; left: 88%; bottom: 25%; animation-duration: 7.5s; animation-delay: 2s; }
+  .boba-6 { width: 6px; height: 6px; left: 42%; bottom: 8%; animation-duration: 11s; animation-delay: 5.5s; }
+
+  @keyframes bobaRise {
+    0%   { transform: translateY(0) scale(0.8); opacity: 0; }
+    10%  { opacity: 0.7; }
+    50%  { transform: translateY(-30px) scale(1); opacity: 0.5; }
+    90%  { opacity: 0.2; }
+    100% { transform: translateY(-60px) scale(0.6); opacity: 0; }
+  }
+
+  /* Bubble tea cup watermark */
+  .boba-cup {
+    position: absolute;
+    bottom: 4px;
+    right: 8px;
+    width: 40px;
+    height: 54px;
+    opacity: 0.35;
+    pointer-events: none;
+    filter: blur(0.3px);
+  }
+  .boba-cup svg { width: 100%; height: 100%; display: block; }
 </style>
