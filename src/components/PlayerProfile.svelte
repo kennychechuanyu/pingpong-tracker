@@ -239,15 +239,32 @@
         <div class="boba-float boba-5"></div>
         <div class="boba-float boba-6"></div>
         <div class="boba-cup">
-          <svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg">
-            <rect x="12" y="18" width="36" height="52" rx="4" fill="rgba(200,160,120,0.15)" stroke="rgba(200,160,120,0.3)" stroke-width="1.5"/>
-            <rect x="18" y="10" width="24" height="12" rx="6" fill="none" stroke="rgba(200,160,120,0.25)" stroke-width="1.5"/>
-            <line x1="30" y1="4" x2="30" y2="10" stroke="rgba(200,160,120,0.3)" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="22" cy="55" r="4" fill="rgba(60,30,15,0.4)"/>
-            <circle cx="32" cy="58" r="3.5" fill="rgba(60,30,15,0.35)"/>
-            <circle cx="26" cy="48" r="3" fill="rgba(60,30,15,0.3)"/>
-            <circle cx="36" cy="50" r="3.5" fill="rgba(60,30,15,0.35)"/>
-            <circle cx="20" cy="62" r="3" fill="rgba(60,30,15,0.3)"/>
+          <svg viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg">
+            <!-- Cup body — tapered -->
+            <path d="M18 30 L14 100 Q14 108 22 108 L58 108 Q66 108 66 100 L62 30 Z"
+                  fill="rgba(210,180,140,0.25)" stroke="rgba(210,180,140,0.55)" stroke-width="1.8"/>
+            <!-- Milk tea fill -->
+            <path d="M19 40 L15 98 Q15 106 22 106 L58 106 Q65 106 65 98 L61 40 Z"
+                  fill="rgba(180,130,80,0.2)"/>
+            <!-- Lid -->
+            <rect x="14" y="24" width="52" height="8" rx="4" fill="rgba(210,180,140,0.3)" stroke="rgba(210,180,140,0.5)" stroke-width="1.5"/>
+            <!-- Straw -->
+            <line x1="45" y1="4" x2="42" y2="28" stroke="rgba(220,180,140,0.6)" stroke-width="3.5" stroke-linecap="round"/>
+            <!-- Boba pearls inside cup -->
+            <circle cx="30" cy="92" r="5.5" fill="rgba(60,30,10,0.7)" stroke="rgba(90,50,20,0.5)" stroke-width="0.8"/>
+            <circle cx="42" cy="95" r="5" fill="rgba(55,25,8,0.65)" stroke="rgba(90,50,20,0.5)" stroke-width="0.8"/>
+            <circle cx="52" cy="90" r="5.5" fill="rgba(60,30,10,0.7)" stroke="rgba(90,50,20,0.5)" stroke-width="0.8"/>
+            <circle cx="24" cy="84" r="4.5" fill="rgba(55,25,8,0.6)" stroke="rgba(90,50,20,0.5)" stroke-width="0.8"/>
+            <circle cx="36" cy="85" r="5" fill="rgba(60,30,10,0.65)" stroke="rgba(90,50,20,0.5)" stroke-width="0.8"/>
+            <circle cx="50" cy="82" r="4.5" fill="rgba(55,25,8,0.6)" stroke="rgba(90,50,20,0.5)" stroke-width="0.8"/>
+            <circle cx="28" cy="76" r="4" fill="rgba(60,30,10,0.5)" stroke="rgba(90,50,20,0.4)" stroke-width="0.8"/>
+            <circle cx="44" cy="74" r="4.5" fill="rgba(55,25,8,0.5)" stroke="rgba(90,50,20,0.4)" stroke-width="0.8"/>
+            <!-- Shine on cup -->
+            <path d="M22 34 L20 85" stroke="rgba(255,255,255,0.12)" stroke-width="3" stroke-linecap="round"/>
+            <!-- Boba pearl shines -->
+            <circle cx="28" cy="90" r="1.5" fill="rgba(255,255,255,0.25)"/>
+            <circle cx="40" cy="93" r="1.2" fill="rgba(255,255,255,0.2)"/>
+            <circle cx="50" cy="88" r="1.3" fill="rgba(255,255,255,0.22)"/>
           </svg>
         </div>
       {/if}
@@ -1893,38 +1910,37 @@
   .boba-float {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, rgba(100,60,30,0.5), rgba(50,25,10,0.6));
-    box-shadow: inset -1px -1px 2px rgba(0,0,0,0.3), 0 0 4px rgba(100,60,30,0.15);
+    background: radial-gradient(circle at 30% 30%, rgba(140,90,40,0.85), rgba(60,30,10,0.9));
+    box-shadow: inset -2px -2px 3px rgba(0,0,0,0.4), inset 2px 2px 3px rgba(200,160,100,0.2), 0 0 6px rgba(100,60,30,0.3);
     pointer-events: none;
     animation: bobaRise linear infinite;
     opacity: 0;
   }
 
-  .boba-1 { width: 10px; height: 10px; left: 8%; bottom: 15%; animation-duration: 7s; animation-delay: 0s; }
-  .boba-2 { width: 8px; height: 8px; left: 75%; bottom: 10%; animation-duration: 9s; animation-delay: 1.5s; }
-  .boba-3 { width: 12px; height: 12px; left: 55%; bottom: 20%; animation-duration: 8s; animation-delay: 3s; }
-  .boba-4 { width: 7px; height: 7px; left: 25%; bottom: 5%; animation-duration: 10s; animation-delay: 4.5s; }
-  .boba-5 { width: 9px; height: 9px; left: 88%; bottom: 25%; animation-duration: 7.5s; animation-delay: 2s; }
-  .boba-6 { width: 6px; height: 6px; left: 42%; bottom: 8%; animation-duration: 11s; animation-delay: 5.5s; }
+  .boba-1 { width: 14px; height: 14px; left: 6%; bottom: 15%; animation-duration: 7s; animation-delay: 0s; }
+  .boba-2 { width: 12px; height: 12px; left: 72%; bottom: 10%; animation-duration: 9s; animation-delay: 1.5s; }
+  .boba-3 { width: 16px; height: 16px; left: 50%; bottom: 20%; animation-duration: 8s; animation-delay: 3s; }
+  .boba-4 { width: 11px; height: 11px; left: 22%; bottom: 5%; animation-duration: 10s; animation-delay: 4.5s; }
+  .boba-5 { width: 13px; height: 13px; left: 85%; bottom: 25%; animation-duration: 7.5s; animation-delay: 2s; }
+  .boba-6 { width: 10px; height: 10px; left: 38%; bottom: 8%; animation-duration: 11s; animation-delay: 5.5s; }
 
   @keyframes bobaRise {
     0%   { transform: translateY(0) scale(0.8); opacity: 0; }
-    10%  { opacity: 0.7; }
-    50%  { transform: translateY(-30px) scale(1); opacity: 0.5; }
-    90%  { opacity: 0.2; }
-    100% { transform: translateY(-60px) scale(0.6); opacity: 0; }
+    8%   { opacity: 0.9; }
+    50%  { transform: translateY(-35px) scale(1); opacity: 0.7; }
+    85%  { opacity: 0.3; }
+    100% { transform: translateY(-70px) scale(0.6); opacity: 0; }
   }
 
   /* Bubble tea cup watermark */
   .boba-cup {
     position: absolute;
-    bottom: 4px;
-    right: 8px;
-    width: 40px;
-    height: 54px;
-    opacity: 0.35;
+    bottom: 2px;
+    right: 6px;
+    width: 56px;
+    height: 76px;
+    opacity: 0.7;
     pointer-events: none;
-    filter: blur(0.3px);
   }
   .boba-cup svg { width: 100%; height: 100%; display: block; }
 </style>
