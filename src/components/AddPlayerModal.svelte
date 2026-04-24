@@ -1,7 +1,6 @@
 <script>
   import { createEventDispatcher, onMount, onDestroy } from 'svelte'
-  import { addPlayer, setPlayerPin } from '../lib/stores.js'
-  import { hashPin } from '../lib/pin.js'
+  import { addPlayer } from '../lib/stores.js'
 
   export let open = false
 
@@ -55,9 +54,8 @@
         paddle_type: paddleType,
         philosophy: philosophy.trim() || null,
         avatarFile,
+        pin,
       })
-      const hash = await hashPin(pin)
-      await setPlayerPin(player.id, hash)
       dispatch('created', player)
       open = false
       reset()

@@ -134,9 +134,13 @@ export function subscribeRealtime() {
   return () => supabase.removeChannel(channel)
 }
 
-export async function addPlayer({ name, paddle_type, philosophy, avatarFile }) {
+export async function addPlayer({ name, paddle_type, philosophy, avatarFile, pin }) {
+  // Hash the PIN and include it in the INSERT so the player is created with
+  // their PIN atomically.  This avoids a separate set_player_pin RPC call
+  // which would incorrectly demand an admin PIN for the brand-new player.
+  const pin_hash = pin ? await hashPin(pin) : null
   // Raw fetch insert — bypasses Supabase client wrapper issues on Safari
-  await dbPost('players', { name, paddle_type: paddle_type || null, philosophy: philosophy || null })
+  await dbPost('players', { name, paddle_type: paddle_type || null, philosophy: philosophy || null, pin_hash })
 
   // Fetch the newly created player
   const { data: player, error: fetchError } = await supabase
